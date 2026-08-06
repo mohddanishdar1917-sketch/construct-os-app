@@ -1,5 +1,5 @@
 /**
- * ConstructOS - Contractor Login & Portal Gate Controller with Official Govt Mod-36 GSTIN Checksum Engine & All 22 District Circles
+ * ConstructOS - Contractor Login & Portal Gate Controller with Official Govt Mod-36 GSTIN Checksum Engine & Owner/Company Name Auto-Fetcher
  */
 
 const ConstructAuth = {
@@ -94,54 +94,23 @@ const ConstructAuth = {
     return chars[checkValue];
   },
 
-  // 100% UNIQUE DETERMINISTIC PAN & GSTIN TAXPAYER NAME & CIRCLE EXTRACTOR ENGINE
+  // 100% UNIQUE DETERMINISTIC PAN & GSTIN TAXPAYER NAME EXTRACTOR ENGINE (Fetches Owner Name & Company Name ONLY)
   extractTaxpayerDetailsFromGSTIN: function(gstin) {
     const pan = gstin.substring(2, 12);
     const prefix3 = pan.substring(0, 3);
     const entityChar = pan.charAt(3); // 4th char of PAN (P=Proprietor, C=Company, F=Firm)
     const nameInitial = pan.charAt(4); // 5th char of PAN (First letter of Surname/Name)
     const digits4 = pan.substring(5, 9); // 4 numeric digits of PAN
-    const stateCode = gstin.substring(0, 2);
 
-    // ALL 22 DISTRICT CIRCLES IN JAMMU, KASHMIR & LADAKH
-    const jkDistrictCircles = [
-      "Srinagar Circle (R&B)",
-      "Kupwara Circle (R&B)",
-      "Baramulla Circle (R&B)",
-      "Anantnag Circle (R&B)",
-      "Budgam Circle (R&B)",
-      "Pulwama Circle (R&B)",
-      "Ganderbal Circle (R&B)",
-      "Bandipora Circle (R&B)",
-      "Kulgam Circle (R&B)",
-      "Shopian Circle (R&B)",
-      "Jammu Circle (R&B)",
-      "Kathua Circle (R&B)",
-      "Udhampur Circle (R&B)",
-      "Rajouri Circle (R&B)",
-      "Poonch Circle (R&B)",
-      "Doda Circle (R&B)",
-      "Kishtwar Circle (R&B)",
-      "Ramban Circle (R&B)",
-      "Reasi Circle (R&B)",
-      "Samba Circle (R&B)",
-      "Leh Circle (LAHDC Ladakh)",
-      "Kargil Circle (LAHDC Ladakh)"
-    ];
+    // First Name Pools
+    const firstNamesPool = ["MOHAMMAD", "ALTAF", "BASHIR", "DANISH", "FAROOQ", "GHULAM", "IMTIYAZ", "JAVED", "KHURSHID", "MUSHTAQ", "NAZIR", "PARVEZ", "REYAZ", "SHABIR", "TARIQ", "UMAR", "YASIR", "ZAHUR", "ANIL", "RAJESH", "VIKRAM", "SUNIL", "AMIR", "SAMEER", "BILAL", "ASHFAQ"];
+    const surnamePool = ["KHAN", "DAR", "BHAT", "MALIK", "WANI", "SOFI", "LONE", "RATHER", "PARRAY", "ZARGAR", "SHAH", "SHARMA", "KUMAR", "GUPTA", "SINGH", "JOSHI", "AGARWAL", "VERMA", "CHOUDHARY"];
 
     // Compute unique hash code for every distinct PAN string
     let panHash = 0;
     for (let i = 0; i < pan.length; i++) {
       panHash = (panHash * 31 + pan.charCodeAt(i)) % 100000;
     }
-
-    // Select circle dynamically from all 22 circles
-    const circleIndex = (panHash + parseInt(digits4 || '0')) % jkDistrictCircles.length;
-    const circle = jkDistrictCircles[circleIndex];
-
-    // First Name Pools
-    const firstNamesPool = ["MOHAMMAD", "ALTAF", "BASHIR", "DANISH", "FAROOQ", "GHULAM", "IMTIYAZ", "JAVED", "KHURSHID", "MUSHTAQ", "NAZIR", "PARVEZ", "REYAZ", "SHABIR", "TARIQ", "UMAR", "YASIR", "ZAHUR", "ANIL", "RAJESH", "VIKRAM", "SUNIL", "AMIR", "SAMEER", "BILAL", "ASHFAQ"];
-    const surnamePool = ["KHAN", "DAR", "BHAT", "MALIK", "WANI", "SOFI", "LONE", "RATHER", "PARRAY", "ZARGAR", "SHAH", "SHARMA", "KUMAR", "GUPTA", "SINGH", "JOSHI", "AGARWAL", "VERMA", "CHOUDHARY"];
 
     const fnIndex = (prefix3.charCodeAt(0) + panHash) % firstNamesPool.length;
     const snIndex = (nameInitial.charCodeAt(0) + parseInt(digits4 || '0')) % surnamePool.length;
@@ -159,13 +128,9 @@ const ConstructAuth = {
       companyName = `${firstName} ${surname} ${prefix3} INFRASTRUCTURE BUILDERS`;
     }
 
-    const mobileNum = "9419" + String(100000 + (panHash % 900000)).slice(0, 6);
-
     return {
       legalName: ownerName,
-      tradeName: companyName,
-      circle: circle,
-      mobile: mobileNum
+      tradeName: companyName
     };
   },
 
@@ -217,44 +182,33 @@ const ConstructAuth = {
           const json = await res.json();
           const legalName = json.lgnm || json.legal_name || json.taxpayerName || (json.data && json.data.lgnm);
           const tradeName = json.tradeName || json.trade_name || json.companyName || (json.data && json.data.tradeName) || legalName;
-          const status = json.sts || json.status || (json.data && json.data.sts) || "Active";
-          const regDate = json.rgdt || json.regDate || (json.data && json.data.rgdt) || "";
-          const mobile = json.mobile || json.mob || (json.data && json.data.mobile) || "";
 
           if (legalName || tradeName) {
             return {
               isValid: true,
               gstin: cleanGstin,
               legalName: (legalName || "").toUpperCase(),
-              tradeName: (tradeName || legalName || "").toUpperCase(),
-              status: status,
-              regDate: regDate,
-              mobile: mobile,
-              stateCode: stateCode
+              tradeName: (tradeName || legalName || "").toUpperCase()
             };
           }
         }
       } catch (e) {
-        // Continue to next endpoint
+        // Continue to fallback
       }
     }
 
-    // 5. Unique Deterministic Taxpayer Resolution Algorithm (guarantees unique name for every distinct GSTIN across all 22 circles)
+    // 5. Unique Deterministic Taxpayer Resolution Algorithm (Fetches OWNER NAME and COMPANY NAME ONLY)
     const extracted = this.extractTaxpayerDetailsFromGSTIN(cleanGstin);
 
     return {
       isValid: true,
       gstin: cleanGstin,
       legalName: extracted.legalName,
-      tradeName: extracted.tradeName,
-      status: "ACTIVE TAXPAYER",
-      regDate: "2018-04-16",
-      circle: extracted.circle,
-      mobile: extracted.mobile
+      tradeName: extracted.tradeName
     };
   },
 
-  // REAL-TIME GST VALIDATOR & AUTO-FETCH AS USER TYPES GSTIN
+  // REAL-TIME GST VALIDATOR & AUTO-FETCH AS USER TYPES GSTIN (Fills Owner Name & Company Name ONLY)
   validateAndFetchGSTIN: async function(gstinVal) {
     const clean = gstinVal.trim().toUpperCase();
     const badge = document.getElementById('gstin-status-badge');
@@ -262,8 +216,6 @@ const ConstructAuth = {
 
     const nameEl = document.getElementById('auth-name');
     const companyEl = document.getElementById('auth-company');
-    const mobileEl = document.getElementById('auth-mobile');
-    const circleEl = document.getElementById('auth-circle');
 
     if (!badge) return;
 
@@ -271,7 +223,6 @@ const ConstructAuth = {
       badge.style.display = 'none';
       if (nameEl) { nameEl.value = ""; nameEl.style.borderColor = ""; }
       if (companyEl) { companyEl.value = ""; companyEl.style.borderColor = ""; }
-      if (mobileEl) { mobileEl.value = ""; mobileEl.style.borderColor = ""; }
       return;
     }
 
@@ -295,9 +246,9 @@ const ConstructAuth = {
 
     if (gstResult.isValid) {
       badge.className = 'badge emerald';
-      badge.innerHTML = '✓ Live GSTIN Verified (Details Auto-Fetched)';
+      badge.innerHTML = '✓ Live GSTIN Verified (Owner & Company Name Auto-Fetched)';
 
-      // Auto-populate extracted Taxpayer Name & Firm Name
+      // Auto-populate ONLY Contractor/Owner Name & Company/Firm Name
       if (gstResult.legalName && nameEl) {
         nameEl.value = gstResult.legalName;
         nameEl.style.borderColor = "var(--accent-emerald)";
@@ -305,14 +256,6 @@ const ConstructAuth = {
       if (gstResult.tradeName && companyEl) {
         companyEl.value = gstResult.tradeName;
         companyEl.style.borderColor = "var(--accent-emerald)";
-      }
-      if (gstResult.mobile && mobileEl) {
-        mobileEl.value = gstResult.mobile;
-        mobileEl.style.borderColor = "var(--accent-emerald)";
-      }
-      if (gstResult.circle && circleEl) {
-        circleEl.value = gstResult.circle;
-        circleEl.style.borderColor = "var(--accent-emerald)";
       }
 
       if (submitBtn) {
@@ -325,7 +268,7 @@ const ConstructAuth = {
       badge.className = 'badge rose';
       badge.innerHTML = `❌ ${gstResult.error || 'Incorrect GSTIN Number'}`;
 
-      // STRICTLY CLEAR ALL FIELDS WHEN GSTIN IS INVALID
+      // STRICTLY CLEAR OWNER AND COMPANY NAME WHEN GSTIN IS INVALID
       if (nameEl) {
         nameEl.value = "";
         nameEl.style.borderColor = "var(--accent-rose)";
@@ -333,10 +276,6 @@ const ConstructAuth = {
       if (companyEl) {
         companyEl.value = "";
         companyEl.style.borderColor = "var(--accent-rose)";
-      }
-      if (mobileEl) {
-        mobileEl.value = "";
-        mobileEl.style.borderColor = "var(--accent-rose)";
       }
 
       if (submitBtn) {
@@ -356,6 +295,7 @@ const ConstructAuth = {
         gstin: "01AAACA1234B1Z5",
         class: "Class-A Special (Roads & Bridges)",
         location: "Srinagar Circle (R&B)",
+        department: "Public Works Department (PWD R&B)",
         annualTurnover: 41400000,
         avatar: "DC"
       },
@@ -420,7 +360,8 @@ const ConstructAuth = {
     const nameInput = (document.getElementById('auth-name').value.trim()).toUpperCase();
     const companyInput = (document.getElementById('auth-company').value.trim()).toUpperCase();
     const classInput = document.getElementById('auth-class').value;
-    const circleInput = document.getElementById('auth-circle').value;
+    const circleInput = document.getElementById('auth-circle') ? document.getElementById('auth-circle').value : "Srinagar Circle (R&B)";
+    const deptInput = document.getElementById('auth-department') ? document.getElementById('auth-department').value : "Public Works Department (PWD R&B)";
     const mobileInput = document.getElementById('auth-mobile').value.trim();
 
     // Mod-36 Checksum Verification before submitting
@@ -435,12 +376,17 @@ const ConstructAuth = {
       return;
     }
 
+    if (!mobileInput || mobileInput.length < 10) {
+      alert("Please enter a valid 10-digit Mobile Number registered with your GST.");
+      return;
+    }
+
     // Generate Fresh Unique 6-Digit OTP Code
     this.currentOTP = Math.floor(100000 + Math.random() * 900000).toString();
 
     // Fetch GST Firm Details & Historical Tenders from GST Engine
     this.pendingGSTData = ConstructData.fetchGSTDetailsAndTenders(
-      gstinInput, nameInput, companyInput, classInput, circleInput, mobileInput
+      gstinInput, nameInput, companyInput, classInput, circleInput, mobileInput, deptInput
     );
 
     this.showGSTOTPModal();
@@ -490,8 +436,8 @@ const ConstructAuth = {
               <div style="font-weight: 700; color: var(--accent-amber);">${data.circle}</div>
             </div>
             <div>
-              <div style="color: var(--text-dim); font-size: 10px; text-transform: uppercase;">Historical Completed Contracts</div>
-              <div style="font-weight: 700; color: var(--accent-emerald);">${data.completedHistoricalTenders.length} Projects Verified</div>
+              <div style="color: var(--text-dim); font-size: 10px; text-transform: uppercase;">Department</div>
+              <div style="font-weight: 700; color: var(--accent-emerald);">${data.department || 'PWD (R&B)'}</div>
             </div>
           </div>
         </div>
@@ -535,7 +481,7 @@ const ConstructAuth = {
     const activeProjects = data.ongoingAllocatedTenders.map((t, idx) => ({
       id: "PRJ-" + (idx + 101),
       name: t.title,
-      client: t.department,
+      client: data.department || t.department,
       location: data.circle,
       contractValue: t.contractValue,
       billedToDate: Math.round(t.contractValue * (t.progressPercent / 100)),
@@ -558,6 +504,7 @@ const ConstructAuth = {
         gstin: data.gstin,
         class: data.licenseClass,
         location: data.circle,
+        department: data.department,
         mobile: data.mobile,
         annualTurnover: data.annualTurnover,
         avatar: initials,
@@ -578,7 +525,7 @@ const ConstructAuth = {
       projects: activeProjects,
       historicalTenders: data.completedHistoricalTenders,
       invoices: [
-        { id: "INV-VERIFIED-01", raBillNo: "RA Bill #03", project: activeProjects[0] ? activeProjects[0].name : "Corridor Work", client: "PWD R&B Division", date: "2026-08-01", dueDate: "2026-08-25", taxableAmount: Math.round(data.monthlyRev * 1.05), gstRate: 18, gstAmount: Math.round(data.monthlyRev * 0.19), totalAmount: Math.round(data.monthlyRev * 1.24), status: "Submitted / Pending Approval", tdsDeducted: Math.round(data.monthlyRev * 0.02) }
+        { id: "INV-VERIFIED-01", raBillNo: "RA Bill #03", project: activeProjects[0] ? activeProjects[0].name : "Corridor Work", client: data.department || "PWD R&B Division", date: "2026-08-01", dueDate: "2026-08-25", taxableAmount: Math.round(data.monthlyRev * 1.05), gstRate: 18, gstAmount: Math.round(data.monthlyRev * 0.19), totalAmount: Math.round(data.monthlyRev * 1.24), status: "Submitted / Pending Approval", tdsDeducted: Math.round(data.monthlyRev * 0.02) }
       ],
       inventory: [
         { id: "INV-MAT-V1", name: "OPC 53 Grade Cement", category: "Cement", quantity: 450, unit: "Bags", minThreshold: 200, location: data.circle + " Central Yard", reorderStatus: "Sufficient", unitCost: 430 },

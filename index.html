@@ -107,7 +107,30 @@
             </div>
 
             <div>
-              <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Executing Circle (J&K & Ladakh)</label>
+              <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Primary Construction Department</label>
+              <select id="auth-department" class="select-input" style="width: 100%; padding: 8px 10px; font-size: 12px;">
+                <option value="Public Works Department (PWD R&B)">Public Works Department (PWD R&B)</option>
+                <option value="PMGSY Rural Roads Department">PMGSY Rural Roads Department</option>
+                <option value="Housing & Urban Development Department (HUDD)">Housing & Urban Development Department (HUDD)</option>
+                <option value="Jal Shakti / Public Health Engineering (PHE)">Jal Shakti / Public Health Engineering (PHE)</option>
+                <option value="Irrigation & Flood Control Department (I&FC)">Irrigation & Flood Control Department (I&FC)</option>
+                <option value="Health & Medical Education Infrastructure Div">Health & Medical Education Infrastructure Div</option>
+                <option value="School & Higher Education Infrastructure Division">School & Higher Education Infrastructure Division</option>
+                <option value="Srinagar Smart City Ltd (SSCL)">Srinagar Smart City Ltd (SSCL)</option>
+                <option value="Jammu Smart City Ltd (JSCL)">Jammu Smart City Ltd (JSCL)</option>
+                <option value="National Highways Authority of India (NHAI / NHIDCL)">National Highways Authority of India (NHAI / NHIDCL)</option>
+                <option value="Central Public Works Department (CPWD)">Central Public Works Department (CPWD)</option>
+                <option value="Border Roads Organisation (BRO / HIMANK / BEACON)">Border Roads Organisation (BRO / HIMANK / BEACON)</option>
+                <option value="Ladakh Autonomous Hill Development Council (LAHDC)">Ladakh Autonomous Hill Development Council (LAHDC)</option>
+                <option value="J&K Projects Construction Corporation (JKPCC)">J&K Projects Construction Corporation (JKPCC)</option>
+                <option value="J&K Police Housing Corporation (JKPHC)">J&K Police Housing Corporation (JKPHC)</option>
+                <option value="Tourism Development Authorities">Tourism Development Authorities</option>
+                <option value="Power Development Department (PDD Electrical Infra)">Power Development Department (PDD Electrical Infra)</option>
+              </select>
+            </div>
+
+            <div style="grid-column: span 2;">
+              <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Executing Circle (Select District / Region)</label>
               <select id="auth-circle" class="select-input" style="width: 100%; padding: 8px 10px; font-size: 12px;">
                 <option value="Srinagar Circle (R&B)">Srinagar Circle (R&B)</option>
                 <option value="Anantnag Circle (R&B)">Anantnag Circle (R&B)</option>
@@ -134,12 +157,15 @@
                 <option value="PMGSY Kashmir Circle">PMGSY Kashmir Circle</option>
                 <option value="PMGSY Jammu Circle">PMGSY Jammu Circle</option>
                 <option value="Smart City Circle">Smart City Circle</option>
+                <option value="CPWD / Central Infra Circle">CPWD / Central Infra Circle</option>
+                <option value="NHAI / Highways Infrastructure Circle">NHAI / Highways Infrastructure Circle</option>
+                <option value="BRO / Defense Infrastructure Circle">BRO / Defense Infrastructure Circle</option>
               </select>
             </div>
 
             <div style="grid-column: span 2;">
-              <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Mobile Number Registered with GST Number</label>
-              <input id="auth-mobile" type="tel" class="text-input" style="width: 100%; padding: 8px 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;" placeholder="9419012345" maxlength="10" oninput="this.value = this.value.toUpperCase()" required>
+              <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Mobile Number Registered with GST Number (Fill manually)</label>
+              <input id="auth-mobile" type="tel" class="text-input" style="width: 100%; padding: 8px 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;" placeholder="ENTER 10-DIGIT GST MOBILE NUMBER" maxlength="10" oninput="this.value = this.value.toUpperCase()" required>
             </div>
           </div>
 
