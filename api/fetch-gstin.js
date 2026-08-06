@@ -1,4 +1,4 @@
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -8,11 +8,15 @@ export default async function handler(req, res) {
   );
 
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
 
-  const { gstin } = req.body || {};
+  let body = req.body;
+  if (typeof body === 'string') {
+    try { body = JSON.parse(body); } catch(e) {}
+  }
+
+  const { gstin } = body || {};
   if (!gstin || gstin.trim().length !== 15) {
     return res.status(400).json({ error: "Invalid GSTIN length. Must be 15 characters." });
   }
@@ -37,7 +41,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: `Incorrect GSTIN Number! Altered digit detected.` });
   }
 
-  // 2. Deterministic Extractor for Owner Name & Company Name
+  // 2. Extractor
   const pan = cleanGstin.substring(2, 12);
   const prefix3 = pan.substring(0, 3);
   const entityChar = pan.charAt(3);
@@ -73,4 +77,4 @@ export default async function handler(req, res) {
     owner_name: ownerName,
     status: "Active"
   });
-}
+};
