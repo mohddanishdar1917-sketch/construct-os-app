@@ -1,6 +1,6 @@
 /**
  * ConstructOS Data Store
- * Mock Database & Dynamic Contractor Session Manager
+ * Mock Database & Dynamic Contractor Session Manager with GST & Historical Tender Extraction Engine
  */
 
 const ALL_DISTRICTS = [
@@ -132,6 +132,7 @@ const ConstructData = {
   user: null,
   metrics: null,
   projects: [],
+  historicalTenders: [],
   invoices: [],
   inventory: [],
   equipment: [],
@@ -142,10 +143,116 @@ const ConstructData = {
     { id: "CRM-03", name: "Sunil Kumar & Sons", designation: "Material Supplier (TMT & Cement)", dept: "Vendor", phone: "+91 99065XXXXX", email: "sales@sunilsteel.com", creditLimit: 2500000 }
   ],
 
+  // GST Portal Lookup & Historical Tender Fetcher
+  fetchGSTDetailsAndTenders: function(gstin, nameInput, companyInput, classInput, districtInput, revenueInput) {
+    const cleanGstin = (gstin || "01AAACA1234B1Z5").toUpperCase();
+    const ownerName = nameInput || "Mohammad Hussain";
+    const companyName = companyInput || (ownerName.split(' ')[1] || ownerName) + " Infrastructure & Constructions";
+    const district = districtInput || "Srinagar, J&K";
+    const licenseClass = classInput || "Class-A Special (Roads & Bridges)";
+    const monthlyRev = parseFloat(revenueInput) || 3850000;
+
+    const regYear = 2018;
+    const regDate = `${regYear}-04-16`;
+    const maskedMobile = "+91 94190*****";
+
+    // Ongoing Allocated Tenders
+    const ongoingAllocatedTenders = [
+      {
+        tenderId: "TND-ALLOC-2025-09",
+        title: `${district.split(',')[0]} Flyover & Link Corridor Construction`,
+        department: "PWD (R&B) Division I",
+        allocatedDate: "2025-11-10",
+        contractValue: Math.round(monthlyRev * 9.5),
+        status: "ONGOING",
+        progressPercent: 74,
+        executingOfficer: "Er. Altaf Hussain (Chief Engineer)"
+      },
+      {
+        tenderId: "TND-ALLOC-2026-03",
+        title: `Smart City Underground Drainage Network Extension`,
+        department: "Smart City Development Authority",
+        allocatedDate: "2026-01-20",
+        contractValue: Math.round(monthlyRev * 4.2),
+        status: "ONGOING",
+        progressPercent: 45,
+        executingOfficer: "Er. Mushtaq Zargar (Superintending Engineer)"
+      }
+    ];
+
+    // Historical Completed Tenders from Reg Date (2018 - Present)
+    const completedHistoricalTenders = [
+      {
+        tenderId: "TND-COMP-2024-88",
+        title: "Sub-District Hospital Block Expansion & Structural Work",
+        department: "Health & Medical Education Dept",
+        allocatedDate: "2023-05-12",
+        completionDate: "2024-12-20",
+        contractValue: Math.round(monthlyRev * 8.2),
+        status: "COMPLETED",
+        qualityRating: "5.0 ★ Excellent",
+        completionCertificateNo: `PWD/CC/${regYear}/9981`
+      },
+      {
+        tenderId: "TND-COMP-2023-41",
+        title: "PMGSY All-Weather Hill Road Macadamization (18.6 km)",
+        department: "PMGSY J&K / LAHDC",
+        allocatedDate: "2022-04-05",
+        completionDate: "2023-11-15",
+        contractValue: Math.round(monthlyRev * 6.8),
+        status: "COMPLETED",
+        qualityRating: "4.9 ★ Excellent",
+        completionCertificateNo: `PMGSY/CC/2023/401`
+      },
+      {
+        tenderId: "TND-COMP-2021-19",
+        title: "Govt Higher Secondary School RCC Structural Building",
+        department: "School Education Dept / PWD R&B",
+        allocatedDate: "2020-09-01",
+        completionDate: "2021-10-10",
+        contractValue: Math.round(monthlyRev * 3.9),
+        status: "COMPLETED",
+        qualityRating: "4.8 ★ Very Good",
+        completionCertificateNo: `PWD/CC/2021/112`
+      },
+      {
+        tenderId: "TND-COMP-2019-04",
+        title: "District Bridge Abutment & Slope Protection Bunds",
+        department: "Jal Shakti / Irrigation & Flood Control",
+        allocatedDate: "2018-08-15",
+        completionDate: "2019-09-30",
+        contractValue: Math.round(monthlyRev * 2.5),
+        status: "COMPLETED",
+        qualityRating: "4.9 ★ Excellent",
+        completionCertificateNo: `IFC/CC/2019/088`
+      }
+    ];
+
+    const totalHistoricalValue = [...ongoingAllocatedTenders, ...completedHistoricalTenders].reduce((acc, curr) => acc + curr.contractValue, 0);
+
+    return {
+      gstin: cleanGstin,
+      ownerName: ownerName,
+      companyName: companyName,
+      licenseClass: licenseClass,
+      district: district,
+      regDate: regDate,
+      maskedMobile: maskedMobile,
+      taxpayerType: "Regular Taxpayer (Proprietorship / Pvt Ltd)",
+      gstStatus: "ACTIVE / VERIFIED",
+      monthlyRev: monthlyRev,
+      annualTurnover: monthlyRev * 12,
+      totalHistoricalValue: totalHistoricalValue,
+      ongoingAllocatedTenders: ongoingAllocatedTenders,
+      completedHistoricalTenders: completedHistoricalTenders
+    };
+  },
+
   setActiveContractor: function(contractorProfile) {
     this.user = contractorProfile.user;
     this.metrics = contractorProfile.metrics;
     this.projects = contractorProfile.projects;
+    this.historicalTenders = contractorProfile.historicalTenders || [];
     this.invoices = contractorProfile.invoices;
     this.inventory = contractorProfile.inventory;
     this.equipment = contractorProfile.equipment;
@@ -218,6 +325,7 @@ const ConstructData = {
     this.user = null;
     this.metrics = null;
     this.projects = [];
+    this.historicalTenders = [];
     this.invoices = [];
     this.inventory = [];
     this.equipment = [];

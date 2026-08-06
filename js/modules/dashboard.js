@@ -6,8 +6,37 @@ const DashboardModule = {
   render: function() {
     const data = ConstructData;
     const m = data.metrics;
+    const user = data.user || {};
+    const historicalTenders = data.historicalTenders || [];
 
     return `
+      <!-- GST & Firm Registration Verification Banner -->
+      <div class="glass-card" style="margin-bottom: 24px; background: linear-gradient(135deg, rgba(6,182,212,0.1), rgba(15,23,42,0.9)); border-color: rgba(6,182,212,0.4);">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(6,182,212,0.15); border: 1.5px solid var(--accent-cyan); display: flex; align-items: center; justify-content: center; font-size: 22px;">🏛️</div>
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h2 style="font-size: 18px; font-weight: 800; color: #fff;">${user.company || 'Enterprise Firm'}</h2>
+                <span class="badge emerald" style="font-size: 11px;">✓ GSTIN VERIFIED ACTIVE</span>
+              </div>
+              <p style="font-size: 12px; color: var(--text-dim); margin-top: 2px;">
+                GSTIN: <strong style="color: var(--accent-cyan);">${user.gstin || '01AAACA1234B1Z5'}</strong> • Owner: <strong style="color: #fff;">${user.name}</strong> • Base: <strong>${user.location}</strong> • Reg Date: <strong>${user.regDate || '2018-04-16'}</strong>
+              </p>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 10px;">
+            <button class="btn btn-secondary btn-sm" onclick="window.ConstructApp.openAIDrawer('Analyze my GST historical tender track record')">
+              📑 AI Track Record Report
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="ConstructAuth.logoutContractor()">
+              🔄 Switch Account
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Executive Top Stats -->
       <div class="kpi-grid">
         <div class="glass-card kpi-card emerald interactive">
@@ -39,7 +68,7 @@ const DashboardModule = {
           </div>
           <div class="kpi-value">₹${(m.pendingBills).toLocaleString('en-IN')}</div>
           <div class="kpi-footer">
-            <span>3 Invoices in Treasury Clearance</span>
+            <span>Treasury Clearance Active</span>
           </div>
         </div>
 
@@ -105,56 +134,49 @@ const DashboardModule = {
               <div style="width: 38px; height: 38px; border-radius: 50%; background: var(--accent-cyan); display: flex; align-items: center; justify-content: center; font-size: 18px;">🤖</div>
               <div>
                 <h4 style="font-size: 15px; font-weight: 700; color: #fff;">ConstructOS AI Copilot</h4>
-                <p style="font-size: 11px; color: var(--text-muted);">"What would you like to do today Danish?"</p>
+                <p style="font-size: 11px; color: var(--text-muted);">"What would you like to analyze today ${user.name}?"</p>
               </div>
             </div>
-            <p style="font-size: 12px; color: var(--text-main); margin-bottom: 14px;">
-              Ask AI to analyze new tenders, draft RA bills, calculate BOQ profits, or check material stock.
-            </p>
-            <button class="btn btn-primary" style="width: 100%;" onclick="window.ConstructApp.openAIDrawer('Find best tenders for me')">
-              ⚡ Open AI Assistant
+            <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="window.ConstructApp.openAIDrawer('Draft bid submission proposal for TND-2026-8891')">
+              ⚡ Draft Tender Bid Proposal with AI
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Bottom Table: Top Matching Tenders -->
-      <div class="glass-card">
+      <!-- HISTORICAL TENDERS & COMPLETED CONTRACTS SINCE REGISTRATION -->
+      <div class="glass-card" style="margin-top: 24px;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
           <div>
-            <h3 style="font-size: 16px; font-weight: 700; color: #fff;">AI Tender Intelligence Summary</h3>
-            <p style="font-size: 12px; color: var(--text-dim);">Top recommended tenders based on company turnover & technical license</p>
+            <h3 style="font-size: 16px; font-weight: 700; color: #fff;">📜 Historical Completed Contracts & Tender Execution Track Record</h3>
+            <p style="font-size: 12px; color: var(--text-dim);">Verified e-Procurement records completed by ${user.company} since registration (${user.regDate || '2018-04-16'})</p>
           </div>
-          <button class="btn btn-secondary btn-sm" onclick="window.ConstructApp.switchTab('tenders')">View All Tenders (${data.tenders.length}) →</button>
+          <span class="badge cyan">${historicalTenders.length} Verified Certificates</span>
         </div>
 
-        <div class="table-wrapper">
-          <table class="data-table">
+        <div style="overflow-x: auto;">
+          <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 12px;">
             <thead>
-              <tr>
-                <th>Tender ID</th>
-                <th>Work Description</th>
-                <th>Department</th>
-                <th>Est. Value</th>
-                <th>AI Match</th>
-                <th>Win Prob</th>
-                <th>Action</th>
+              <tr style="background: rgba(15,23,42,0.8); text-align: left; color: var(--text-dim);">
+                <th style="padding: 10px;">Tender ID</th>
+                <th style="padding: 10px;">Project Title</th>
+                <th style="padding: 10px;">Department</th>
+                <th style="padding: 10px;">Contract Value</th>
+                <th style="padding: 10px;">Completion Date</th>
+                <th style="padding: 10px;">Rating & Status</th>
               </tr>
             </thead>
             <tbody>
-              ${data.tenders.slice(0, 3).map(t => `
-                <tr>
-                  <td style="font-weight: 700; color: var(--accent-cyan);">${t.id}</td>
-                  <td style="max-width: 320px; font-weight: 500;">${t.title}</td>
-                  <td>${t.department}</td>
-                  <td style="font-weight: 700;">₹${(t.estValue / 100000).toFixed(2)} Lakhs</td>
-                  <td><span class="badge cyan">${t.aiMatchScore}% Match</span></td>
-                  <td><span class="badge emerald" style="font-size: 12px;">${t.aiWinProbability}</span></td>
-                  <td>
-                    <button class="btn btn-primary btn-sm" onclick="window.ConstructApp.openTenderModal('${t.id}')">
-                      Inspect AI PDF
-                    </button>
-                  </td>
+              ${historicalTenders.length === 0 ? `
+                <tr><td colspan="6" style="text-align:center; padding: 20px; color: var(--text-dim);">No historical tenders recorded for demo account. Login with GSTIN to view.</td></tr>
+              ` : historicalTenders.map(t => `
+                <tr style="border-bottom: 1px solid var(--border-subtle);">
+                  <td style="padding: 12px;"><span class="badge cyan">${t.tenderId}</span></td>
+                  <td style="padding: 12px; font-weight: 600; color: #fff;">${t.title}</td>
+                  <td style="padding: 12px; color: var(--text-muted);">${t.department}</td>
+                  <td style="padding: 12px; font-weight: 700; color: var(--accent-emerald);">₹${(t.contractValue/100000).toFixed(2)} Lakhs</td>
+                  <td style="padding: 12px; color: var(--text-main);">${t.completionDate}</td>
+                  <td style="padding: 12px;"><span class="badge emerald">${t.qualityRating || 'COMPLETED'}</span></td>
                 </tr>
               `).join('')}
             </tbody>
@@ -172,26 +194,58 @@ const DashboardModule = {
       window.myRevenueChart.destroy();
     }
 
+    const data = ConstructData;
+    const monthlyRevLakhs = (data.metrics.monthlyRevenue / 100000);
+
     window.myRevenueChart = new Chart(ctx, {
       type: 'line',
       data: {
-        labels: ['Apr', 'May', 'Jun', 'Jul', 'Aug (Est)', 'Sep (Proj)'],
+        labels: ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'],
         datasets: [
           {
             label: 'Revenue (₹ Lakhs)',
-            data: [22.5, 28.0, 31.2, 34.5, 38.0, 42.5],
+            data: [
+              Math.round(monthlyRevLakhs * 0.65),
+              Math.round(monthlyRevLakhs * 0.72),
+              Math.round(monthlyRevLakhs * 0.81),
+              Math.round(monthlyRevLakhs * 0.90),
+              Math.round(monthlyRevLakhs * 1.00),
+              Math.round(monthlyRevLakhs * 1.08),
+              Math.round(monthlyRevLakhs * 1.15),
+              Math.round(monthlyRevLakhs * 1.20),
+              Math.round(monthlyRevLakhs * 1.28),
+              Math.round(monthlyRevLakhs * 1.35),
+              Math.round(monthlyRevLakhs * 1.40),
+              Math.round(monthlyRevLakhs * 1.48)
+            ],
             borderColor: '#06b6d4',
             backgroundColor: 'rgba(6, 182, 212, 0.1)',
             tension: 0.4,
-            fill: true
+            fill: true,
+            borderWidth: 3,
+            pointBackgroundColor: '#06b6d4'
           },
           {
             label: 'Gross Profit (₹ Lakhs)',
-            data: [6.1, 7.8, 8.9, 9.8, 11.2, 12.8],
+            data: [
+              Math.round(monthlyRevLakhs * 0.65 * 0.28),
+              Math.round(monthlyRevLakhs * 0.72 * 0.28),
+              Math.round(monthlyRevLakhs * 0.81 * 0.28),
+              Math.round(monthlyRevLakhs * 0.90 * 0.28),
+              Math.round(monthlyRevLakhs * 1.00 * 0.28),
+              Math.round(monthlyRevLakhs * 1.08 * 0.28),
+              Math.round(monthlyRevLakhs * 1.15 * 0.28),
+              Math.round(monthlyRevLakhs * 1.20 * 0.28),
+              Math.round(monthlyRevLakhs * 1.28 * 0.28),
+              Math.round(monthlyRevLakhs * 1.35 * 0.28),
+              Math.round(monthlyRevLakhs * 1.40 * 0.28),
+              Math.round(monthlyRevLakhs * 1.48 * 0.28)
+            ],
             borderColor: '#10b981',
-            backgroundColor: 'transparent',
             borderDash: [5, 5],
-            tension: 0.4
+            tension: 0.4,
+            borderWidth: 2,
+            pointBackgroundColor: '#10b981'
           }
         ]
       },
@@ -199,11 +253,13 @@ const DashboardModule = {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { labels: { color: '#94a3b8', font: { family: 'Outfit' } } }
+          legend: {
+            labels: { color: '#94a3b8', font: { family: 'Outfit', size: 12 } }
+          }
         },
         scales: {
-          x: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-          y: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+          x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
         }
       }
     });
