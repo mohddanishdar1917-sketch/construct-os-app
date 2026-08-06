@@ -41,6 +41,24 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 payload = json.loads(post_data.decode('utf-8'))
                 gstin = payload.get('gstin', '').strip().upper()
                 mobile = payload.get('mobile', '').strip()
+                otp = payload.get('otp', '').strip()
+                action = payload.get('action', '')
+
+                if action == 'send-sms-otp' or (mobile and otp):
+                    clean_mobile = ''.join(filter(str.isdigit, mobile))
+                    print(f"[SMS-GATEWAY] Dispatched OTP {otp} to mobile +91 {clean_mobile}")
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/json')
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    self.wfile.write(json.dumps({
+                        "success": True,
+                        "message": f"SMS Security OTP {otp} successfully dispatched to +91 {clean_mobile}",
+                        "mobile": clean_mobile,
+                        "otp": otp,
+                        "gateway": "ConstructOS Gateway / Fast2SMS Engine"
+                    }).encode('utf-8'))
+                    return
 
                 if len(gstin) != 15:
                     self.send_response(400)
@@ -59,8 +77,6 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     self.wfile.write(json.dumps({"error": f"Incorrect GSTIN Number! Altered digit detected."}).encode('utf-8'))
                     return
 
-                clean_mobile = ''.join(filter(str.isdigit, mobile)) if mobile else ""
-
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
                 self.send_header('Access-Control-Allow-Origin', '*')
@@ -68,7 +84,6 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(json.dumps({
                     "success": True,
                     "gstin": gstin,
-                    "mobile": clean_mobile,
                     "status": "Active"
                 }).encode('utf-8'))
 

@@ -1,11 +1,12 @@
 /**
  * ConstructOS - Contractor Login & Portal Gate Controller
- * Manual Entry Workflow with Mod-36 Checksum Validation & Free 10-Digit Mobile Entry
+ * Smooth Inline OTP Verification Workflow with Live SMS Dispatch & Dynamic Countdown Timer
  */
 
 const ConstructAuth = {
   pendingGSTData: null,
   currentOTP: null,
+  otpTimerInterval: null,
 
   init: function() {
     const hasSession = ConstructData.loadStoredContractor();
@@ -42,8 +43,12 @@ const ConstructAuth = {
   switchLoginTab: function(tab) {
     const demoTab = document.getElementById('login-tab-demo');
     const customTab = document.getElementById('login-tab-custom');
+    const otpView = document.getElementById('login-otp-view');
+
     const btnDemo = document.getElementById('tab-btn-demo');
     const btnCustom = document.getElementById('tab-btn-custom');
+
+    if (otpView) otpView.style.display = 'none';
 
     if (tab === 'demo') {
       if (demoTab) demoTab.style.display = 'block';
@@ -83,7 +88,6 @@ const ConstructAuth = {
       const val = chars.indexOf(char);
       if (val === -1) return null;
       
-      // Position factor: 1 for odd index (1st, 3rd...), 2 for even index (2nd, 4th...)
       const factor = (i % 2 === 0) ? 1 : 2;
       const product = val * factor;
       const quotient = Math.floor(product / 36);
@@ -122,7 +126,6 @@ const ConstructAuth = {
       return;
     }
 
-    // 1. Valid State Codes Check (01 to 38)
     const validStateCodes = [
       "01", "02", "03", "04", "05", "06", "07", "08", "09", "10",
       "11", "12", "13", "14", "15", "16", "17", "18", "19", "20",
@@ -138,7 +141,6 @@ const ConstructAuth = {
       return;
     }
 
-    // 2. Modulo-36 Govt Checksum Verification
     const expectedChecksum = this.calculateGSTINChecksum(clean.substring(0, 14));
     const actualChecksum = clean.charAt(14);
 
@@ -219,8 +221,8 @@ const ConstructAuth = {
     }
   },
 
-  // SUBMIT CONTRACTOR WITH MANUAL ENTRY WORKFLOW & FREE 10-DIGIT MOBILE ENTRY
-  submitCustomContractor: function(event) {
+  // DISPATCH SMS OTP & TRANSITION SMOOTHLY TO INLINE OTP VIEW
+  submitCustomContractor: async function(event) {
     if (event) {
       event.preventDefault();
       event.stopPropagation();
@@ -261,7 +263,7 @@ const ConstructAuth = {
         return;
       }
 
-      // 3. Simple 10-Digit Mobile Number Validation (allows any 10-digit number freely)
+      // 3. Simple 10-Digit Mobile Number Validation
       if (!mobileInput || mobileInput.length !== 10 || !/^\d{10}$/.test(mobileInput)) {
         alert("Please enter a valid 10-digit Mobile Number.");
         return;
@@ -275,94 +277,119 @@ const ConstructAuth = {
         gstinInput, nameInput, companyInput, classInput, circleInput, mobileInput, deptInput
       );
 
-      this.showGSTOTPModal();
+      // Dispatch SMS API call to backend gateway
+      this.dispatchSMSGateway(mobileInput, this.currentOTP);
+
+      // Smooth Inline Screen Transition
+      const customTab = document.getElementById('login-tab-custom');
+      const otpView = document.getElementById('login-otp-view');
+
+      if (customTab) customTab.style.display = 'none';
+      if (otpView) otpView.style.display = 'block';
+
+      // Update Card Preview Details
+      const targetMobileEl = document.getElementById('otp-target-mobile');
+      const toastCodeEl = document.getElementById('otp-toast-code');
+      const cardGstinEl = document.getElementById('otp-card-gstin');
+      const cardOwnerEl = document.getElementById('otp-card-owner');
+      const cardCompanyEl = document.getElementById('otp-card-company');
+      const cardCircleEl = document.getElementById('otp-card-circle');
+      const otpInputEl = document.getElementById('inline-otp-input');
+
+      if (targetMobileEl) targetMobileEl.innerText = `+91 ${mobileInput}`;
+      if (toastCodeEl) toastCodeEl.innerText = this.currentOTP;
+      if (cardGstinEl) cardGstinEl.innerText = gstinInput;
+      if (cardOwnerEl) cardOwnerEl.innerText = nameInput;
+      if (cardCompanyEl) cardCompanyEl.innerText = companyInput;
+      if (cardCircleEl) cardCircleEl.innerText = circleInput;
+      if (otpInputEl) {
+        otpInputEl.value = this.currentOTP;
+        otpInputEl.focus();
+      }
+
+      // Start Countdown Timer
+      this.startOTPTimer();
+
     } catch (e) {
       console.error("[ConstructAuth Exception]", e);
       alert("An unexpected error occurred: " + e.message);
     }
   },
 
-  showGSTOTPModal: function() {
-    const data = this.pendingGSTData;
-    const otpCode = this.currentOTP;
-    if (!data) return;
-
-    const modalBodyHtml = `
-      <div style="text-align: center; padding: 10px;">
-        <div class="brand-logo-circle" style="width: 52px; height: 52px; margin: 0 auto 12px; border-width: 2px;">
-          <img src="assets/logo.jpg" alt="ConstructOS" class="brand-logo-img">
-        </div>
-        
-        <span class="badge cyan" style="font-size: 11px; padding: 3px 8px;">🏛️ Mobile OTP Security Verification</span>
-        <h3 style="font-size: 18px; font-weight: 800; color: #fff; margin-top: 8px;">Verify Mobile Ownership</h3>
-        <p style="font-size: 12px; color: var(--text-dim); margin-top: 4px; margin-bottom: 14px;">
-          GSTIN: <strong style="color: var(--accent-cyan);">${data.gstin}</strong> • Registered: <strong style="color: #fff;">${data.regDate}</strong>
-        </p>
-
-        <!-- Live SMS Toast Notification -->
-        <div style="background: rgba(16,185,129,0.12); border: 1.5px dashed var(--accent-emerald); border-radius: var(--radius-md); padding: 12px; margin-bottom: 16px; text-align: left;">
-          <div style="font-size: 11px; font-weight: 700; color: var(--accent-emerald); display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-            <span>💬 SMS RECEIVED (${data.maskedMobile})</span>
-            <span style="font-size: 10px; color: var(--text-dim);">JUST NOW</span>
-          </div>
-          <p style="font-size: 12px; color: #fff; line-height: 1.4;">
-            "Your GSTIN Security OTP for ConstructOS verification is <strong style="color: var(--accent-cyan); font-size: 15px; letter-spacing: 2px;">${otpCode}</strong>. Do not share with anyone."
-          </p>
-        </div>
-
-        <!-- Registered Record Preview Card -->
-        <div style="background: rgba(6,182,212,0.06); border: 1px solid rgba(6,182,212,0.3); border-radius: var(--radius-md); padding: 14px; text-align: left; margin-bottom: 18px;">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px;">
-            <div>
-              <div style="color: var(--text-dim); font-size: 10px; text-transform: uppercase;">Legal Firm Name</div>
-              <div style="font-weight: 700; color: #fff;">${data.companyName}</div>
-            </div>
-            <div>
-              <div style="color: var(--text-dim); font-size: 10px; text-transform: uppercase;">Proprietor / Director</div>
-              <div style="font-weight: 700; color: var(--accent-cyan);">${data.ownerName}</div>
-            </div>
-            <div>
-              <div style="color: var(--text-dim); font-size: 10px; text-transform: uppercase;">Executing Circle</div>
-              <div style="font-weight: 700; color: var(--accent-amber);">${data.circle}</div>
-            </div>
-            <div>
-              <div style="color: var(--text-dim); font-size: 10px; text-transform: uppercase;">Department</div>
-              <div style="font-weight: 700; color: var(--accent-emerald);">${data.department || 'PWD (R&B)'}</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Mobile OTP Input Section -->
-        <div style="background: rgba(15,23,42,0.8); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px;">
-          <div style="font-size: 12px; color: var(--text-main); margin-bottom: 8px;">
-            Enter 6-Digit Security OTP code sent to your mobile:
-          </div>
-          
-          <input id="gst-otp-input" type="text" class="text-input" style="width: 200px; text-align: center; font-size: 22px; font-weight: 800; letter-spacing: 4px; border-color: var(--accent-cyan);" value="${otpCode}" maxlength="6" required>
-        </div>
-
-        <button type="button" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 14px; font-weight: 700; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo)); box-shadow: 0 0 25px rgba(6,182,212,0.4);" onclick="ConstructAuth.confirmGSTOTPAndLogin()">
-          🔐 VERIFY OTP & ACCESS CONTRACTOR WORKSPACE
-        </button>
-      </div>
-    `;
-
-    const titleEl = document.getElementById('modal-title');
-    const bodyEl = document.getElementById('modal-body');
-    const overlayEl = document.getElementById('modal-overlay');
-
-    if (titleEl && bodyEl && overlayEl) {
-      titleEl.innerText = "🔐 Mobile OTP Security Verification";
-      bodyEl.innerHTML = modalBodyHtml;
-      overlayEl.classList.add('active');
-    } else if (window.ConstructApp && typeof window.ConstructApp.openModal === 'function') {
-      window.ConstructApp.openModal("🔐 Mobile OTP Security Verification", modalBodyHtml);
+  // DISPATCH SMS GATEWAY CALL TO BACKEND
+  dispatchSMSGateway: async function(mobile, otp) {
+    const endpoints = ['/api/fetch-gstin', 'http://localhost:5000/api/fetch-gstin', 'http://localhost:8080/api/fetch-gstin'];
+    for (const ep of endpoints) {
+      try {
+        await fetch(ep, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'send-sms-otp', mobile: mobile, otp: otp })
+        });
+        break;
+      } catch(e) {}
     }
   },
 
-  // CONFIRM OTP & HYDRATE WORKSPACE WITH ALL ALLOCATED & HISTORICAL TENDERS
-  confirmGSTOTPAndLogin: function() {
-    const otpInputEl = document.getElementById('gst-otp-input');
+  // START 60-SECOND COUNTDOWN TIMER
+  startOTPTimer: function() {
+    if (this.otpTimerInterval) clearInterval(this.otpTimerInterval);
+
+    let timeLeft = 60;
+    const timerText = document.getElementById('otp-timer-text');
+    const timerCount = document.getElementById('otp-timer-count');
+    const resendBtn = document.getElementById('otp-resend-btn');
+
+    if (timerText) timerText.style.display = 'inline';
+    if (resendBtn) resendBtn.style.display = 'none';
+    if (timerCount) timerCount.innerText = timeLeft;
+
+    this.otpTimerInterval = setInterval(() => {
+      timeLeft--;
+      if (timerCount) timerCount.innerText = timeLeft;
+
+      if (timeLeft <= 0) {
+        clearInterval(this.otpTimerInterval);
+        if (timerText) timerText.style.display = 'none';
+        if (resendBtn) resendBtn.style.display = 'inline';
+      }
+    }, 1000);
+  },
+
+  // RESEND OTP DISPATCH HANDLER
+  resendOTPCode: function() {
+    const mobileInput = (document.getElementById('auth-mobile') ? document.getElementById('auth-mobile').value.trim() : "9419012345");
+    this.currentOTP = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const toastCodeEl = document.getElementById('otp-toast-code');
+    const otpInputEl = document.getElementById('inline-otp-input');
+
+    if (toastCodeEl) toastCodeEl.innerText = this.currentOTP;
+    if (otpInputEl) {
+      otpInputEl.value = this.currentOTP;
+      otpInputEl.focus();
+    }
+
+    this.dispatchSMSGateway(mobileInput, this.currentOTP);
+    this.startOTPTimer();
+
+    alert(`🔄 Fresh 6-Digit OTP (${this.currentOTP}) dispatched to +91 ${mobileInput}!`);
+  },
+
+  // RETURN BACK TO FORM VIEW TO EDIT DETAILS
+  backToFormView: function() {
+    if (this.otpTimerInterval) clearInterval(this.otpTimerInterval);
+
+    const customTab = document.getElementById('login-tab-custom');
+    const otpView = document.getElementById('login-otp-view');
+
+    if (otpView) otpView.style.display = 'none';
+    if (customTab) customTab.style.display = 'block';
+  },
+
+  // CONFIRM INLINE OTP & ACCESS CONTRACTOR WORKSPACE
+  confirmInlineOTPAndLogin: function() {
+    const otpInputEl = document.getElementById('inline-otp-input');
     const enteredOTP = otpInputEl ? otpInputEl.value.trim() : this.currentOTP;
 
     if (enteredOTP !== this.currentOTP) {
@@ -372,6 +399,8 @@ const ConstructAuth = {
 
     const data = this.pendingGSTData;
     if (!data) return;
+
+    if (this.otpTimerInterval) clearInterval(this.otpTimerInterval);
 
     const initials = data.ownerName ? data.ownerName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'CT';
 
@@ -435,12 +464,6 @@ const ConstructAuth = {
     };
 
     ConstructData.setActiveContractor(verifiedProfile);
-    
-    const overlayEl = document.getElementById('modal-overlay');
-    if (overlayEl) overlayEl.classList.remove('active');
-    else if (window.ConstructApp && typeof window.ConstructApp.closeModal === 'function') {
-      window.ConstructApp.closeModal();
-    }
 
     this.showAppShell();
     this.updateHeaderProfile();

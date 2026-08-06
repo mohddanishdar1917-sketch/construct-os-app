@@ -175,6 +175,75 @@
         </form>
       </div>
 
+      <!-- TAB 3: DEDICATED INLINE OTP VERIFICATION SCREEN -->
+      <div id="login-otp-view" style="display: none;">
+        <div style="text-align: center; padding: 6px 0;">
+          <span class="badge cyan" style="font-size: 11px; padding: 4px 10px; margin-bottom: 8px;">🏛️ SMS OTP Security Verification</span>
+          <h3 style="font-size: 18px; font-weight: 800; color: #fff; margin-top: 6px;">Verify Mobile OTP</h3>
+          <p style="font-size: 12px; color: var(--text-dim); margin-top: 4px; margin-bottom: 12px;">
+            Security code dispatched to <strong id="otp-target-mobile" style="color: var(--accent-cyan);">+91 9419012345</strong>
+          </p>
+
+          <!-- Live SMS Toast Notification Box -->
+          <div style="background: rgba(16,185,129,0.12); border: 1.5px dashed var(--accent-emerald); border-radius: var(--radius-md); padding: 12px; margin-bottom: 14px; text-align: left;">
+            <div style="font-size: 11px; font-weight: 700; color: var(--accent-emerald); display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+              <span>💬 SMS DISPATCHED TO DEVICE</span>
+              <span style="font-size: 10px; color: var(--text-dim);">JUST NOW</span>
+            </div>
+            <p style="font-size: 12px; color: #fff; line-height: 1.4;">
+              "Your ConstructOS Security OTP is <strong id="otp-toast-code" style="color: var(--accent-cyan); font-size: 16px; letter-spacing: 2px;">______</strong>. Do not share with anyone."
+            </p>
+          </div>
+
+          <!-- Contractor Record Preview Card -->
+          <div style="background: rgba(6,182,212,0.06); border: 1px solid rgba(6,182,212,0.3); border-radius: var(--radius-md); padding: 10px 12px; text-align: left; margin-bottom: 14px; font-size: 11px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <div>
+                <div style="color: var(--text-dim); font-size: 10px; text-transform: uppercase;">GSTIN Number</div>
+                <div id="otp-card-gstin" style="font-weight: 700; color: var(--accent-cyan);">01AAACA1234B1Z5</div>
+              </div>
+              <div>
+                <div style="color: var(--text-dim); font-size: 10px; text-transform: uppercase;">Contractor / Owner</div>
+                <div id="otp-card-owner" style="font-weight: 700; color: #fff;">DEMO CONTRACTOR</div>
+              </div>
+              <div>
+                <div style="color: var(--text-dim); font-size: 10px; text-transform: uppercase;">Company / Firm</div>
+                <div id="otp-card-company" style="font-weight: 700; color: #fff;">DEMO ENTERPRISE</div>
+              </div>
+              <div>
+                <div style="color: var(--text-dim); font-size: 10px; text-transform: uppercase;">Executing Circle</div>
+                <div id="otp-card-circle" style="font-weight: 700; color: var(--accent-amber);">Srinagar Circle</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6-Digit OTP Entry Field -->
+          <div style="background: rgba(15,23,42,0.8); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 14px; margin-bottom: 14px;">
+            <label style="font-size: 12px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">
+              Enter 6-Digit Security OTP:
+            </label>
+            <input id="inline-otp-input" type="text" class="text-input" style="width: 220px; text-align: center; font-size: 22px; font-weight: 800; letter-spacing: 6px; border-color: var(--accent-cyan);" maxlength="6" placeholder="000000">
+            <div style="font-size: 11px; color: var(--text-dim); margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+              <span id="otp-timer-text">⏱️ Resend OTP in <strong id="otp-timer-count" style="color: var(--accent-cyan);">60</strong>s</span>
+              <button id="otp-resend-btn" type="button" style="display: none; background: none; border: none; color: var(--accent-cyan); text-decoration: underline; cursor: pointer; font-size: 11px; font-weight: 700;" onclick="ConstructAuth.resendOTPCode()">
+                🔄 Resend OTP
+              </button>
+            </div>
+          </div>
+
+          <!-- Verification Action Buttons -->
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <button type="button" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 13px; font-weight: 700; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo)); box-shadow: 0 0 20px rgba(6,182,212,0.35);" onclick="ConstructAuth.confirmInlineOTPAndLogin()">
+              🔐 VERIFY OTP & ENTER WORKSPACE
+            </button>
+            <button type="button" style="background: none; border: none; color: var(--text-dim); font-size: 11px; cursor: pointer; margin-top: 4px;" onclick="ConstructAuth.backToFormView()">
+              ← Edit Company / Mobile Details
+            </button>
+          </div>
+
+        </div>
+      </div>
+
     </div>
   </div>
 
