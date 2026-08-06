@@ -1,5 +1,5 @@
 /**
- * ConstructOS - Contractor Login & Portal Gate Controller with Strict Live GST API Fetcher
+ * ConstructOS - Contractor Login & Portal Gate Controller with Official Govt Mod-36 GSTIN Checksum Engine & Live API Fetcher
  */
 
 const ConstructAuth = {
@@ -61,7 +61,7 @@ const ConstructAuth = {
       if (demoTab) demoTab.style.display = 'none';
       if (customTab) customTab.style.display = 'block';
       if (btnCustom) {
-        btnCustom.style.background = 'linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo))';
+        btnCustom.style.background = 'linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo));';
         btnCustom.style.color = '#fff';
         btnCustom.style.border = '1px solid var(--accent-cyan)';
       }
@@ -73,11 +73,32 @@ const ConstructAuth = {
     }
   },
 
-  // LIVE GST PORTAL QUERY ENGINE WITH STRICT GOVT GSTIN CHECKSUM RULES
+  // OFFICIAL GOVT OF INDIA GSTIN MODULO-36 CHECKSUM ALGORITHM
+  calculateGSTINChecksum: function(gstin14) {
+    const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    let sum = 0;
+    for (let i = 0; i < 14; i++) {
+      const char = gstin14[i];
+      const val = chars.indexOf(char);
+      if (val === -1) return null;
+      
+      // Position factor: 1 for odd index (1st, 3rd...), 2 for even index (2nd, 4th...)
+      const factor = (i % 2 === 0) ? 1 : 2;
+      const product = val * factor;
+      const quotient = Math.floor(product / 36);
+      const remainder = product % 36;
+      sum += (quotient + remainder);
+    }
+    
+    const checkValue = (36 - (sum % 36)) % 36;
+    return chars[checkValue];
+  },
+
+  // LIVE GST PORTAL QUERY ENGINE WITH MOD-36 CHECKSUM DETECTOR
   fetchLiveGSTPortalDetails: async function(gstin) {
     const cleanGstin = gstin.trim().toUpperCase();
     
-    // 1. Strict Govt GSTIN Regex & State Code Validation
+    // 1. Valid State Codes Check (01 to 38)
     const validStateCodes = [
       "01", "02", "03", "04", "05", "06", "07", "08", "09", "10",
       "11", "12", "13", "14", "15", "16", "17", "18", "19", "20",
@@ -86,18 +107,28 @@ const ConstructAuth = {
     ];
 
     const stateCode = cleanGstin.substring(0, 2);
-    const isStateValid = validStateCodes.includes(stateCode);
-    const strictGstinRegex = /^(0[1-9]|[1-3][0-8])[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
-    const isFormatValid = strictGstinRegex.test(cleanGstin);
+    if (!validStateCodes.includes(stateCode)) {
+      return { isValid: false, error: `Invalid State Code (${stateCode}). State codes must be 01 to 38.` };
+    }
 
-    if (!isStateValid || !isFormatValid) {
-      return {
-        isValid: false,
-        error: !isStateValid ? `Invalid State Code (${stateCode})` : "Invalid GSTIN (14th char must be 'Z')"
+    // 2. Strict GSTIN Regex (2 digits + 5 alpha + 4 numeric + 1 alpha + 1 entity + 'Z' + 1 checksum)
+    const strictGstinRegex = /^(0[1-9]|[1-3][0-8])[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+    if (!strictGstinRegex.test(cleanGstin)) {
+      return { isValid: false, error: "Invalid GSTIN format (14th char must be 'Z', 3rd-7th chars must be PAN letters)" };
+    }
+
+    // 3. OFFICIAL GOVT MODULO-36 MATHEMATICAL CHECKSUM VERIFICATION
+    const expectedChecksum = this.calculateGSTINChecksum(cleanGstin.substring(0, 14));
+    const actualChecksum = cleanGstin.charAt(14);
+
+    if (expectedChecksum !== actualChecksum) {
+      return { 
+        isValid: false, 
+        error: `Incorrect GSTIN Number! Altered digit detected (Checksum mismatch: expected '${expectedChecksum}', got '${actualChecksum}')` 
       };
     }
 
-    // 2. Query Live GST Portal API endpoints dynamically
+    // 4. Query Live Public GST Search APIs for Real Taxpayer Details
     const endpoints = [
       `https://api.postman.com/gstin/${cleanGstin}`,
       `https://sheet.gstin.in/api/v1/search/${cleanGstin}`,
@@ -149,7 +180,7 @@ const ConstructAuth = {
 
     const circle = stateCircleMap[stateCode] || "Srinagar Circle (R&B)";
 
-    // Strictly return valid format structure without injecting dummy names
+    // Passed Mod-36 Checksum & Govt GSTIN Rules
     return {
       isValid: true,
       gstin: cleanGstin,
@@ -186,19 +217,23 @@ const ConstructAuth = {
       badge.style.display = 'inline-flex';
       badge.className = 'badge amber';
       badge.innerHTML = `⚠️ Entering GSTIN (${clean.length}/15 chars)`;
-      if (submitBtn) submitBtn.disabled = true;
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.5';
+        submitBtn.style.cursor = 'not-allowed';
+      }
       return;
     }
 
     badge.style.display = 'inline-flex';
     badge.className = 'badge cyan';
-    badge.innerHTML = '⏳ Querying Live GST Portal...';
+    badge.innerHTML = '⏳ Querying Live GST Portal & Mod-36 Checksum...';
 
     const gstResult = await this.fetchLiveGSTPortalDetails(clean);
 
     if (gstResult.isValid) {
       badge.className = 'badge emerald';
-      badge.innerHTML = '✓ Live GSTIN Verified';
+      badge.innerHTML = '✓ Live GSTIN Verified (Checksum Match)';
 
       // Update ONLY if returned by live GST portal API query
       if (gstResult.legalName && nameEl) {
@@ -224,7 +259,7 @@ const ConstructAuth = {
         submitBtn.style.cursor = 'pointer';
       }
     } else {
-      // ❌ STRICT ERROR FOR INVALID GSTIN
+      // ❌ STRICT ERROR FOR INVALID GSTIN OR CHECKSUM MISMATCH
       badge.className = 'badge rose';
       badge.innerHTML = `❌ ${gstResult.error || 'Incorrect GSTIN Number'}`;
 
@@ -326,23 +361,15 @@ const ConstructAuth = {
     const circleInput = document.getElementById('auth-circle').value;
     const mobileInput = document.getElementById('auth-mobile').value.trim();
 
-    // Strict Govt GSTIN Format check
-    const validStateCodes = [
-      "01", "02", "03", "04", "05", "06", "07", "08", "09", "10",
-      "11", "12", "13", "14", "15", "16", "17", "18", "19", "20",
-      "21", "22", "23", "24", "25", "26", "27", "28", "29", "30",
-      "31", "32", "33", "34", "35", "36", "37", "38"
-    ];
-    const stateCode = gstinInput.substring(0, 2);
-    const strictGstinRegex = /^(0[1-9]|[1-3][0-8])[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
-
-    if (!gstinInput || gstinInput.length < 15 || !validStateCodes.includes(stateCode) || !strictGstinRegex.test(gstinInput)) {
-      alert("❌ Invalid GSTIN Number! Please enter a valid 15-digit GSTIN (14th character must be 'Z', e.g., 01AAAAA0000A1Z5).");
+    // Mod-36 Checksum Verification before submitting
+    const expectedChecksum = this.calculateGSTINChecksum(gstinInput.substring(0, 14));
+    if (!expectedChecksum || expectedChecksum !== gstinInput.charAt(14)) {
+      alert(`❌ Invalid GSTIN Number! Altered digit detected (Checksum mismatch). Please enter a valid GSTIN.`);
       return;
     }
 
     if (!nameInput || !companyInput) {
-      alert("Please fill in Contractor/Owner Name and Company/Firm Name.");
+      alert("Please enter Contractor/Owner Name and Company/Firm Name.");
       return;
     }
 
