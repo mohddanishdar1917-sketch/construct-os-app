@@ -134,7 +134,7 @@ const ConstructAuth = {
     };
   },
 
-  // LIVE GST PORTAL QUERY ENGINE WITH MULTI-PROXY API FALLBACK & MOD-36 CHECKSUM
+  // LIVE GST PORTAL QUERY ENGINE WITH FLASK BACKEND & MULTI-PROXY API FALLBACK & MOD-36 CHECKSUM
   fetchLiveGSTPortalDetails: async function(gstin) {
     const cleanGstin = gstin.trim().toUpperCase();
     
@@ -168,27 +168,29 @@ const ConstructAuth = {
       };
     }
 
-    // 4. Query Live Public GST Search APIs for Real Taxpayer Details
-    const endpoints = [
-      `https://api.allorigins.win/raw?url=https://services.gst.gov.in/services/api/search/taxpayerDetails/${cleanGstin}`,
-      `https://api.postman.com/gstin/${cleanGstin}`,
-      `https://sheet.gstin.in/api/v1/search/${cleanGstin}`
+    // 4. Query Flask/Backend API Endpoints (/api/fetch-gstin)
+    const apiEndpoints = [
+      '/api/fetch-gstin',
+      'http://localhost:5000/api/fetch-gstin',
+      'http://localhost:8080/api/fetch-gstin'
     ];
 
-    for (const url of endpoints) {
+    for (const endpoint of apiEndpoints) {
       try {
-        const res = await fetch(url, { method: 'GET' });
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ gstin: cleanGstin })
+        });
         if (res.ok) {
-          const json = await res.json();
-          const legalName = json.lgnm || json.legal_name || json.taxpayerName || (json.data && json.data.lgnm);
-          const tradeName = json.tradeName || json.trade_name || json.companyName || (json.data && json.data.tradeName) || legalName;
-
-          if (legalName || tradeName) {
+          const data = await res.json();
+          if (data.company_name || data.owner_name) {
             return {
               isValid: true,
               gstin: cleanGstin,
-              legalName: (legalName || "").toUpperCase(),
-              tradeName: (tradeName || legalName || "").toUpperCase()
+              legalName: (data.owner_name || data.company_name).toUpperCase(),
+              tradeName: (data.company_name || data.owner_name).toUpperCase(),
+              status: data.status || "Active"
             };
           }
         }
@@ -240,7 +242,7 @@ const ConstructAuth = {
 
     badge.style.display = 'inline-flex';
     badge.className = 'badge cyan';
-    badge.innerHTML = '⏳ Querying Live GST Portal & Mod-36 Checksum...';
+    badge.innerHTML = '⏳ Querying Backend /api/fetch-gstin...';
 
     const gstResult = await this.fetchLiveGSTPortalDetails(clean);
 
