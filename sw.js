@@ -3,7 +3,7 @@
  * Enables offline capability & native app loading speed
  */
 
-const CACHE_NAME = 'constructos-v1';
+const CACHE_NAME = 'constructos-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -26,22 +26,23 @@ const ASSETS_TO_CACHE = [
 
 // Install Event: Cache Core Static Assets
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[ConstructOS PWA] Pre-caching offline assets');
+      console.log('[ConstructOS PWA] Pre-caching offline assets v2');
       return cache.addAll(ASSETS_TO_CACHE);
-    }).then(() => self.skipWaiting())
+    })
   );
 });
 
-// Activate Event: Clean old caches
+// Activate Event: Clean old caches immediately
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cache) => {
           if (cache !== CACHE_NAME) {
-            console.log('[ConstructOS PWA] Deleting old cache:', cache);
+            console.log('[ConstructOS PWA] Purging old cache:', cache);
             return caches.delete(cache);
           }
         })
@@ -57,7 +58,6 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {
-        // Cache dynamic responses if valid
         if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
@@ -67,7 +67,6 @@ self.addEventListener('fetch', (event) => {
         return networkResponse;
       })
       .catch(() => {
-        // Fallback to cache if offline
         return caches.match(event.request);
       })
   );
