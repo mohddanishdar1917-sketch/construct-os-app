@@ -144,23 +144,24 @@ const ConstructData = {
   ],
 
   // GST Portal Lookup & Historical Tender Fetcher
-  fetchGSTDetailsAndTenders: function(gstin, nameInput, companyInput, classInput, districtInput, revenueInput) {
+  fetchGSTDetailsAndTenders: function(gstin, nameInput, companyInput, classInput, circleInput, mobileInput) {
     const cleanGstin = (gstin || "01AAACA1234B1Z5").toUpperCase();
-    const ownerName = nameInput || "Mohammad Hussain";
-    const companyName = companyInput || (ownerName.split(' ')[1] || ownerName) + " Infrastructure & Constructions";
-    const district = districtInput || "Srinagar, J&K";
+    const ownerName = (nameInput || "MOHAMMAD HUSSAIN").toUpperCase();
+    const companyName = (companyInput || "HUSSAIN INFRA PVT LTD").toUpperCase();
+    const circle = (circleInput || "SRINAGAR CIRCLE (R&B)").toUpperCase();
     const licenseClass = classInput || "Class-A Special (Roads & Bridges)";
-    const monthlyRev = parseFloat(revenueInput) || 3850000;
+    const rawMobile = mobileInput || "9419012345";
+    const maskedMobile = "+91 " + (rawMobile.length >= 10 ? rawMobile.slice(0, 5) + "*****" : "94190*****");
+    const monthlyRev = 3850000;
 
     const regYear = 2018;
     const regDate = `${regYear}-04-16`;
-    const maskedMobile = "+91 94190*****";
 
     // Ongoing Allocated Tenders
     const ongoingAllocatedTenders = [
       {
         tenderId: "TND-ALLOC-2025-09",
-        title: `${district.split(',')[0]} Flyover & Link Corridor Construction`,
+        title: `${circle.split(' ')[0]} Flyover & Link Corridor Construction`,
         department: "PWD (R&B) Division I",
         allocatedDate: "2025-11-10",
         contractValue: Math.round(monthlyRev * 9.5),
@@ -235,7 +236,8 @@ const ConstructData = {
       ownerName: ownerName,
       companyName: companyName,
       licenseClass: licenseClass,
-      district: district,
+      circle: circle,
+      mobile: rawMobile,
       regDate: regDate,
       maskedMobile: maskedMobile,
       taxpayerType: "Regular Taxpayer (Proprietorship / Pvt Ltd)",

@@ -4,6 +4,7 @@
 
 const ConstructAuth = {
   pendingGSTData: null,
+  currentOTP: null,
 
   init: function() {
     const hasSession = ConstructData.loadStoredContractor();
@@ -72,17 +73,42 @@ const ConstructAuth = {
     }
   },
 
+  // AUTO-FETCH COMPANY DETAILS AS USER TYPES GSTIN
+  onGSTINChange: function(gstinVal) {
+    const clean = gstinVal.trim().toUpperCase();
+    const statusBadge = document.getElementById('gstin-autofetch-badge');
+
+    if (clean.length >= 8) {
+      const nameEl = document.getElementById('auth-name');
+      const companyEl = document.getElementById('auth-company');
+      const mobileEl = document.getElementById('auth-mobile');
+      const circleEl = document.getElementById('auth-circle');
+
+      if (nameEl && !nameEl.value) nameEl.value = "MOHAMMAD HUSSAIN";
+      if (companyEl && !companyEl.value) companyEl.value = "HUSSAIN INFRA PVT LTD";
+      if (mobileEl && !mobileEl.value) mobileEl.value = "9419012345";
+      if (circleEl && (!circleEl.value || circleEl.value === 'ALL')) circleEl.value = "Srinagar Circle (R&B)";
+
+      if (statusBadge) {
+        statusBadge.style.display = 'inline-flex';
+        statusBadge.innerHTML = '✨ GSTIN Recognized — Details Auto-Fetched';
+      }
+    } else if (statusBadge) {
+      statusBadge.style.display = 'none';
+    }
+  },
+
   createFreeDemoAccount: function() {
     const demoProfile = {
       id: "demo_" + Date.now(),
       user: {
-        name: "Demo Contractor",
-        company: "Ahmad Infrastructure & Construction",
+        name: "MOHAMMAD HUSSAIN",
+        company: "HUSSAIN INFRA PVT LTD",
         gstin: "01AAACA1234B1Z5",
         class: "Class-A Special (Roads & Bridges)",
-        location: "Srinagar, J&K",
+        location: "Srinagar Circle (R&B)",
         annualTurnover: 41400000,
-        avatar: "DC"
+        avatar: "MH"
       },
       metrics: {
         monthlyRevenue: 3450000,
@@ -137,20 +163,23 @@ const ConstructAuth = {
     }
   },
 
-  // 1. INITIATE GST & OTP VERIFICATION MODAL
+  // 1. INITIATE GST & OTP VERIFICATION MODAL WITH DYNAMIC OTP
   submitCustomContractor: function(event) {
     if (event) event.preventDefault();
 
-    const nameInput = document.getElementById('auth-name').value.trim();
-    const companyInput = document.getElementById('auth-company').value.trim();
-    const gstinInput = document.getElementById('auth-gstin').value.trim();
+    const nameInput = (document.getElementById('auth-name').value.trim() || "MOHAMMAD HUSSAIN").toUpperCase();
+    const companyInput = (document.getElementById('auth-company').value.trim() || "HUSSAIN INFRA PVT LTD").toUpperCase();
+    const gstinInput = (document.getElementById('auth-gstin').value.trim() || "01AAACA1234B1Z5").toUpperCase();
     const classInput = document.getElementById('auth-class').value;
-    const districtInput = document.getElementById('auth-location').value;
-    const revenueInput = document.getElementById('auth-revenue').value;
+    const circleInput = document.getElementById('auth-circle').value;
+    const mobileInput = document.getElementById('auth-mobile').value.trim() || "9419012345";
+
+    // Generate Fresh Unique 6-Digit OTP Code
+    this.currentOTP = Math.floor(100000 + Math.random() * 900000).toString();
 
     // Fetch GST Firm Details & Historical Tenders from GST Engine
     this.pendingGSTData = ConstructData.fetchGSTDetailsAndTenders(
-      gstinInput, nameInput, companyInput, classInput, districtInput, revenueInput
+      gstinInput, nameInput, companyInput, classInput, circleInput, mobileInput
     );
 
     this.showGSTOTPModal();
@@ -158,6 +187,7 @@ const ConstructAuth = {
 
   showGSTOTPModal: function() {
     const data = this.pendingGSTData;
+    const otpCode = this.currentOTP;
     if (!data) return;
 
     const modalBodyHtml = `
@@ -168,12 +198,23 @@ const ConstructAuth = {
         
         <span class="badge cyan" style="font-size: 11px; padding: 3px 8px;">🏛️ Official GSTN Mobile OTP Verification</span>
         <h3 style="font-size: 18px; font-weight: 800; color: #fff; margin-top: 8px;">Verify GSTIN Ownership & Fetch Records</h3>
-        <p style="font-size: 12px; color: var(--text-dim); margin-top: 4px; margin-bottom: 16px;">
+        <p style="font-size: 12px; color: var(--text-dim); margin-top: 4px; margin-bottom: 14px;">
           GSTIN: <strong style="color: var(--accent-cyan);">${data.gstin}</strong> • Registered: <strong style="color: #fff;">${data.regDate}</strong>
         </p>
 
+        <!-- Simulated Live SMS Toast -->
+        <div style="background: rgba(16,185,129,0.12); border: 1.5px dashed var(--accent-emerald); border-radius: var(--radius-md); padding: 12px; margin-bottom: 16px; text-align: left;">
+          <div style="font-size: 11px; font-weight: 700; color: var(--accent-emerald); display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+            <span>💬 SMS RECEIVED (+91 ${data.mobile})</span>
+            <span style="font-size: 10px; color: var(--text-dim);">JUST NOW</span>
+          </div>
+          <p style="font-size: 12px; color: #fff; line-height: 1.4;">
+            "Your GSTIN Security OTP for ConstructOS verification is <strong style="color: var(--accent-cyan); font-size: 14px;">${otpCode}</strong>. Do not share with anyone."
+          </p>
+        </div>
+
         <!-- Fetched Record Preview Card -->
-        <div style="background: rgba(6,182,212,0.06); border: 1px solid rgba(6,182,212,0.3); border-radius: var(--radius-md); padding: 14px; text-align: left; margin-bottom: 20px;">
+        <div style="background: rgba(6,182,212,0.06); border: 1px solid rgba(6,182,212,0.3); border-radius: var(--radius-md); padding: 14px; text-align: left; margin-bottom: 18px;">
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px;">
             <div>
               <div style="color: var(--text-dim); font-size: 10px; text-transform: uppercase;">Legal Firm Name</div>
@@ -184,12 +225,12 @@ const ConstructAuth = {
               <div style="font-weight: 700; color: var(--accent-cyan);">${data.ownerName}</div>
             </div>
             <div>
-              <div style="color: var(--text-dim); font-size: 10px; text-transform: uppercase;">Currently Ongoing Allocated Tenders</div>
-              <div style="font-weight: 700; color: var(--accent-emerald);">${data.ongoingAllocatedTenders.length} Active Contracts (₹${(data.ongoingAllocatedTenders.reduce((a,b)=>a+b.contractValue,0)/10000000).toFixed(2)} Cr)</div>
+              <div style="color: var(--text-dim); font-size: 10px; text-transform: uppercase;">Executing Circle</div>
+              <div style="font-weight: 700; color: var(--accent-amber);">${data.circle}</div>
             </div>
             <div>
-              <div style="color: var(--text-dim); font-size: 10px; text-transform: uppercase;">Historical Completed Tenders</div>
-              <div style="font-weight: 700; color: var(--accent-amber);">${data.completedHistoricalTenders.length} Projects Completed Since ${data.regDate.split('-')[0]}</div>
+              <div style="color: var(--text-dim); font-size: 10px; text-transform: uppercase;">Historical Completed Contracts</div>
+              <div style="font-weight: 700; color: var(--accent-emerald);">${data.completedHistoricalTenders.length} Projects Verified</div>
             </div>
           </div>
         </div>
@@ -197,18 +238,14 @@ const ConstructAuth = {
         <!-- Mobile OTP Input Section -->
         <div style="background: rgba(15,23,42,0.8); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px;">
           <div style="font-size: 12px; color: var(--text-main); margin-bottom: 8px;">
-            📲 Enter 6-Digit Security OTP sent to <strong>${data.maskedMobile}</strong>:
+            Enter 6-Digit OTP sent to <strong>${data.maskedMobile}</strong>:
           </div>
           
-          <input id="gst-otp-input" type="text" class="text-input" style="width: 200px; text-align: center; font-size: 20px; font-weight: 800; letter-spacing: 4px; border-color: var(--accent-cyan);" value="482910" maxlength="6" required>
-          
-          <div style="font-size: 11px; color: var(--accent-emerald); margin-top: 6px;">
-            ✓ Pre-filled test OTP code ready for instant 1-click verification
-          </div>
+          <input id="gst-otp-input" type="text" class="text-input" style="width: 200px; text-align: center; font-size: 20px; font-weight: 800; letter-spacing: 4px; border-color: var(--accent-cyan);" value="${otpCode}" maxlength="6" required>
         </div>
 
         <button type="button" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 14px; font-weight: 700; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo)); box-shadow: 0 0 25px rgba(6,182,212,0.4);" onclick="ConstructAuth.confirmGSTOTPAndLogin()">
-          🔐 VERIFY OTP & FETCH COMPLETE HISTORICAL RECORDS
+          🔐 VERIFY OTP & ACCESS CONTRACTOR WORKSPACE
         </button>
       </div>
     `;
@@ -220,9 +257,11 @@ const ConstructAuth = {
 
   // 2. CONFIRM OTP & HYDRATE WORKSPACE WITH ALL ALLOCATED & HISTORICAL TENDERS
   confirmGSTOTPAndLogin: function() {
-    const otpVal = document.getElementById('gst-otp-input') ? document.getElementById('gst-otp-input').value : '482910';
-    if (!otpVal || otpVal.length < 4) {
-      alert("Please enter a valid 6-digit OTP");
+    const otpInputEl = document.getElementById('gst-otp-input');
+    const enteredOTP = otpInputEl ? otpInputEl.value.trim() : this.currentOTP;
+
+    if (enteredOTP !== this.currentOTP) {
+      alert(`Invalid OTP! Please enter the 6-digit code (${this.currentOTP}) sent to your mobile.`);
       return;
     }
 
@@ -236,7 +275,7 @@ const ConstructAuth = {
       id: "PRJ-" + (idx + 101),
       name: t.title,
       client: t.department,
-      location: data.district,
+      location: data.circle,
       contractValue: t.contractValue,
       billedToDate: Math.round(t.contractValue * (t.progressPercent / 100)),
       receivedToDate: Math.round(t.contractValue * (t.progressPercent / 100) * 0.85),
@@ -257,7 +296,8 @@ const ConstructAuth = {
         company: data.companyName,
         gstin: data.gstin,
         class: data.licenseClass,
-        location: data.district,
+        location: data.circle,
+        mobile: data.mobile,
         annualTurnover: data.annualTurnover,
         avatar: initials,
         regDate: data.regDate,
@@ -280,11 +320,11 @@ const ConstructAuth = {
         { id: "INV-VERIFIED-01", raBillNo: "RA Bill #03", project: activeProjects[0] ? activeProjects[0].name : "Corridor Work", client: "PWD R&B Division", date: "2026-08-01", dueDate: "2026-08-25", taxableAmount: Math.round(data.monthlyRev * 1.05), gstRate: 18, gstAmount: Math.round(data.monthlyRev * 0.19), totalAmount: Math.round(data.monthlyRev * 1.24), status: "Submitted / Pending Approval", tdsDeducted: Math.round(data.monthlyRev * 0.02) }
       ],
       inventory: [
-        { id: "INV-MAT-V1", name: "OPC 53 Grade Cement", category: "Cement", quantity: 450, unit: "Bags", minThreshold: 200, location: data.district + " Central Yard", reorderStatus: "Sufficient", unitCost: 430 },
-        { id: "INV-MAT-V2", name: "Fe-550D TMT Steel Rebar", category: "Steel", quantity: 38.5, unit: "Tons", minThreshold: 15, location: data.district + " Central Yard", reorderStatus: "Sufficient", unitCost: 64000 }
+        { id: "INV-MAT-V1", name: "OPC 53 Grade Cement", category: "Cement", quantity: 450, unit: "Bags", minThreshold: 200, location: data.circle + " Central Yard", reorderStatus: "Sufficient", unitCost: 430 },
+        { id: "INV-MAT-V2", name: "Fe-550D TMT Steel Rebar", category: "Steel", quantity: 38.5, unit: "Tons", minThreshold: 15, location: data.circle + " Central Yard", reorderStatus: "Sufficient", unitCost: 64000 }
       ],
       equipment: [
-        { id: "EQP-V1", name: "JCB 3DX Heavy Duty Loader", regNo: "JK01-SITE-889", operator: "Mohammad Ashraf", status: "Operational", site: data.district, fuelConsLtrHr: 8.5, health: "Good", nextServiceHrs: 60 }
+        { id: "EQP-V1", name: "JCB 3DX Heavy Duty Loader", regNo: "JK01-SITE-889", operator: "Mohammad Ashraf", status: "Operational", site: data.circle, fuelConsLtrHr: 8.5, health: "Good", nextServiceHrs: 60 }
       ]
     };
 
@@ -311,8 +351,8 @@ const ConstructAuth = {
     const companyEl = document.querySelector('.sidebar-footer .user-company');
 
     if (avatarEl) avatarEl.innerText = user.avatar || 'MH';
-    if (nameEl) nameEl.innerText = user.name || 'Mohammad Hussain';
-    if (companyEl) companyEl.innerText = user.company || 'Hussain Infra Pvt Ltd';
+    if (nameEl) nameEl.innerText = user.name || 'MOHAMMAD HUSSAIN';
+    if (companyEl) companyEl.innerText = user.company || 'HUSSAIN INFRA PVT LTD';
 
     const topbarProfileBtn = document.getElementById('topbar-contractor-profile');
     if (topbarProfileBtn) {

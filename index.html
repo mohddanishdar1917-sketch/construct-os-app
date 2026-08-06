@@ -80,17 +80,20 @@
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div>
               <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Contractor / Owner Name</label>
-              <input id="auth-name" type="text" class="text-input" style="width: 100%; padding: 8px 10px; font-size: 12px;" placeholder="e.g. Mohammad Hussain" required>
+              <input id="auth-name" type="text" class="text-input" style="width: 100%; padding: 8px 10px; font-size: 12px; text-transform: uppercase;" placeholder="MOHAMMAD HUSSAIN" oninput="this.value = this.value.toUpperCase()" required>
             </div>
 
             <div>
               <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Company / Firm Name</label>
-              <input id="auth-company" type="text" class="text-input" style="width: 100%; padding: 8px 10px; font-size: 12px;" placeholder="e.g. Hussain Infra Pvt Ltd" required>
+              <input id="auth-company" type="text" class="text-input" style="width: 100%; padding: 8px 10px; font-size: 12px; text-transform: uppercase;" placeholder="HUSSAIN INFRA PVT LTD" oninput="this.value = this.value.toUpperCase()" required>
             </div>
 
-            <div>
-              <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">GSTIN Number</label>
-              <input id="auth-gstin" type="text" class="text-input" style="width: 100%; padding: 8px 10px; font-size: 12px;" placeholder="e.g. 01AAACA1234B1Z5" required>
+            <div style="grid-column: span 2;">
+              <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                <span>GSTIN Number</span>
+                <span id="gstin-autofetch-badge" class="badge cyan" style="display: none; font-size: 10px; padding: 2px 6px;">✨ Auto-Fetched Company Records</span>
+              </label>
+              <input id="auth-gstin" type="text" class="text-input" style="width: 100%; padding: 8px 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;" placeholder="01AAACA1234B1Z5" maxlength="15" oninput="ConstructAuth.onGSTINChange(this.value); this.value = this.value.toUpperCase();" required>
             </div>
 
             <div>
@@ -103,40 +106,28 @@
             </div>
 
             <div>
-              <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Base District (J&K & Ladakh)</label>
-              <select id="auth-location" class="select-input" style="width: 100%; padding: 8px 10px; font-size: 12px;">
-                <option value="Srinagar, J&K">Srinagar</option>
-                <option value="Anantnag, J&K">Anantnag</option>
-                <option value="Baramulla, J&K">Baramulla</option>
-                <option value="Budgam, J&K">Budgam</option>
-                <option value="Doda, J&K">Doda</option>
-                <option value="Ganderbal, J&K">Ganderbal</option>
-                <option value="Jammu, J&K">Jammu</option>
-                <option value="Kargil (Ladakh)">Kargil (Ladakh)</option>
-                <option value="Kathua, J&K">Kathua</option>
-                <option value="Kishtwar, J&K">Kishtwar</option>
-                <option value="Kulgam, J&K">Kulgam</option>
-                <option value="Kupwara, J&K">Kupwara</option>
-                <option value="Leh (Ladakh)">Leh (Ladakh)</option>
-                <option value="Poonch, J&K">Poonch</option>
-                <option value="Pulwama, J&K">Pulwama</option>
-                <option value="Rajouri, J&K">Rajouri</option>
-                <option value="Ramban, J&K">Ramban</option>
-                <option value="Reasi, J&K">Reasi</option>
-                <option value="Samba, J&K">Samba</option>
-                <option value="Shopian, J&K">Shopian</option>
-                <option value="Udhampur, J&K">Udhampur</option>
+              <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Executing Circle (J&K & Ladakh)</label>
+              <select id="auth-circle" class="select-input" style="width: 100%; padding: 8px 10px; font-size: 12px;">
+                <option value="Srinagar Circle (R&B)">Srinagar Circle (R&B)</option>
+                <option value="Jammu Circle (R&B)">Jammu Circle (R&B)</option>
+                <option value="Baramulla Circle (R&B)">Baramulla Circle (R&B)</option>
+                <option value="Anantnag Circle (R&B)">Anantnag Circle (R&B)</option>
+                <option value="Budgam Circle (R&B)">Budgam Circle (R&B)</option>
+                <option value="Ladakh Circle (LAHDC)">Ladakh Circle (LAHDC)</option>
+                <option value="PMGSY Kashmir Circle">PMGSY Kashmir Circle</option>
+                <option value="PMGSY Jammu Circle">PMGSY Jammu Circle</option>
+                <option value="Smart City Circle">Smart City Circle</option>
               </select>
             </div>
 
-            <div>
-              <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Est. Monthly Revenue (₹)</label>
-              <input id="auth-revenue" type="number" class="text-input" style="width: 100%; padding: 8px 10px; font-size: 12px;" placeholder="e.g. 3500000" required>
+            <div style="grid-column: span 2;">
+              <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Mobile Number Registered with GST Number</label>
+              <input id="auth-mobile" type="tel" class="text-input" style="width: 100%; padding: 8px 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;" placeholder="9419012345" maxlength="10" oninput="this.value = this.value.toUpperCase()" required>
             </div>
           </div>
 
           <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 13px; margin-top: 4px; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo)); box-shadow: 0 0 20px rgba(6,182,212,0.35);">
-            🔍 Fetch Company Records & Send GST OTP
+            🔍 Send Dynamic GST Security OTP
           </button>
         </form>
       </div>
