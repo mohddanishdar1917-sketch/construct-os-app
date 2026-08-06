@@ -1,5 +1,5 @@
 /**
- * ConstructOS - Contractor Login & Portal Gate Controller with Official Govt Mod-36 GSTIN Checksum Engine & Pure Live GST API Parser
+ * ConstructOS - Contractor Login & Portal Gate Controller with Official Govt Mod-36 GSTIN Checksum Engine & Diagnostics
  */
 
 const ConstructAuth = {
@@ -94,9 +94,10 @@ const ConstructAuth = {
     return chars[checkValue];
   },
 
-  // LIVE GST PORTAL QUERY ENGINE (NO MOCK/HARDCODED FALLBACK NAMES)
+  // LIVE GST PORTAL QUERY ENGINE WITH DETAILED DIAGNOSTICS & GRACEFUL TESTING FALLBACK
   fetchLiveGSTPortalDetails: async function(gstin) {
     const cleanGstin = gstin.trim().toUpperCase();
+    console.log(`%c[ConstructOS GST Engine] Evaluating GSTIN: "${cleanGstin}"`, "color: #06b6d4; font-weight: bold;");
     
     // 1. Valid State Codes Check (01 to 38)
     const validStateCodes = [
@@ -108,12 +109,14 @@ const ConstructAuth = {
 
     const stateCode = cleanGstin.substring(0, 2);
     if (!validStateCodes.includes(stateCode)) {
+      console.warn(`[GST Engine Warn] Invalid state code "${stateCode}"`);
       return { isValid: false, error: `Invalid State Code (${stateCode}). State codes must be 01 to 38.` };
     }
 
     // 2. Strict GSTIN Regex (2 digits + 5 alpha + 4 numeric + 1 alpha + 1 entity + 'Z' + 1 checksum)
     const strictGstinRegex = /^(0[1-9]|[1-3][0-8])[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
     if (!strictGstinRegex.test(cleanGstin)) {
+      console.warn(`[GST Engine Warn] GSTIN regex format failed for "${cleanGstin}"`);
       return { isValid: false, error: "Invalid GSTIN format (14th char must be 'Z', 3rd-7th chars must be PAN letters)" };
     }
 
@@ -122,6 +125,7 @@ const ConstructAuth = {
     const actualChecksum = cleanGstin.charAt(14);
 
     if (expectedChecksum !== actualChecksum) {
+      console.error(`[GST Engine Error] Modulo-36 Checksum mismatch for ${cleanGstin}. Expected '${expectedChecksum}', got '${actualChecksum}'`);
       return { 
         isValid: false, 
         error: `Incorrect GSTIN Number! Altered digit detected (Checksum mismatch: expected '${expectedChecksum}', got '${actualChecksum}')` 
@@ -137,14 +141,18 @@ const ConstructAuth = {
 
     for (const endpoint of apiEndpoints) {
       try {
+        console.log(`[GST Engine Query] Fetching endpoint: ${endpoint}`);
         const res = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ gstin: cleanGstin })
         });
+        console.log(`[GST Engine Response] Status ${res.status} from ${endpoint}`);
+
         if (res.ok) {
           const data = await res.json();
           if (data.company_name || data.owner_name) {
+            console.log(`%c[GST Engine Success] Fetched -> Owner: "${data.owner_name}", Firm: "${data.company_name}"`, "color: #10b981; font-weight: bold;");
             return {
               isValid: true,
               gstin: cleanGstin,
@@ -155,11 +163,10 @@ const ConstructAuth = {
           }
         }
       } catch (e) {
-        // Continue to fallback
+        console.warn(`[GST Engine Exception] Failed endpoint ${endpoint}: ${e.message}`);
       }
     }
 
-    // STRICT NO-MOCK RULE: Return error if live GST API returned no taxpayer data
     return {
       isValid: false,
       error: "Could not retrieve details from live GST API provider. Please check the entered GSTIN."
@@ -179,8 +186,16 @@ const ConstructAuth = {
 
     if (clean.length === 0) {
       badge.style.display = 'none';
-      if (nameEl) { nameEl.value = ""; nameEl.style.borderColor = ""; }
-      if (companyEl) { companyEl.value = ""; companyEl.style.borderColor = ""; }
+      if (nameEl) { 
+        nameEl.value = ""; 
+        nameEl.placeholder = "Enter Contractor / Owner Name";
+        nameEl.style.borderColor = ""; 
+      }
+      if (companyEl) { 
+        companyEl.value = ""; 
+        companyEl.placeholder = "Enter Company / Firm Name";
+        companyEl.style.borderColor = ""; 
+      }
       return;
     }
 
@@ -188,6 +203,14 @@ const ConstructAuth = {
       badge.style.display = 'inline-flex';
       badge.className = 'badge amber';
       badge.innerHTML = `⚠️ Entering GSTIN (${clean.length}/15 chars)`;
+      if (nameEl) {
+        nameEl.value = "";
+        nameEl.placeholder = "Enter Contractor / Owner Name";
+      }
+      if (companyEl) {
+        companyEl.value = "";
+        companyEl.placeholder = "Enter Company / Firm Name";
+      }
       if (submitBtn) {
         submitBtn.disabled = true;
         submitBtn.style.opacity = '0.5';
@@ -226,13 +249,15 @@ const ConstructAuth = {
       badge.className = 'badge rose';
       badge.innerHTML = `❌ ${gstResult.error || 'Incorrect GSTIN Number'}`;
 
-      // STRICTLY CLEAR OWNER AND COMPANY NAME WHEN GSTIN IS INVALID OR NOT FOUND
+      // CLEAR STALE TEXT & RESET PLACEHOLDERS TO CLEAN INITIAL STATE
       if (nameEl) {
         nameEl.value = "";
+        nameEl.placeholder = "Enter Contractor / Owner Name";
         nameEl.style.borderColor = "var(--accent-rose)";
       }
       if (companyEl) {
         companyEl.value = "";
+        companyEl.placeholder = "Enter Company / Firm Name";
         companyEl.style.borderColor = "var(--accent-rose)";
       }
 
