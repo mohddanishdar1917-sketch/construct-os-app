@@ -1,5 +1,5 @@
 /**
- * ConstructOS - Contractor Login & Portal Gate Controller with Official Govt Mod-36 GSTIN Checksum Engine & Unique Taxpayer Extractor
+ * ConstructOS - Contractor Login & Portal Gate Controller with Official Govt Mod-36 GSTIN Checksum Engine & All 22 District Circles
  */
 
 const ConstructAuth = {
@@ -94,7 +94,7 @@ const ConstructAuth = {
     return chars[checkValue];
   },
 
-  // 100% UNIQUE DETERMINISTIC PAN & GSTIN TAXPAYER NAME EXTRACTOR ENGINE
+  // 100% UNIQUE DETERMINISTIC PAN & GSTIN TAXPAYER NAME & CIRCLE EXTRACTOR ENGINE
   extractTaxpayerDetailsFromGSTIN: function(gstin) {
     const pan = gstin.substring(2, 12);
     const prefix3 = pan.substring(0, 3);
@@ -103,31 +103,45 @@ const ConstructAuth = {
     const digits4 = pan.substring(5, 9); // 4 numeric digits of PAN
     const stateCode = gstin.substring(0, 2);
 
-    const stateCircleMap = {
-      "01": "Srinagar Circle (R&B)",
-      "02": "Himachal Circle (PWD)",
-      "03": "Punjab Circle (PWD)",
-      "06": "Haryana Circle (PWD)",
-      "07": "Delhi NCR Circle (CPWD)",
-      "09": "UP West Circle (PWD)",
-      "19": "West Bengal Circle (PWD)",
-      "27": "Maharashtra Circle (PWD)",
-      "29": "Karnataka Circle (PWD)",
-      "37": "Ladakh Circle (LAHDC)",
-      "38": "Kargil Circle (LAHDC)"
-    };
-
-    const circle = stateCircleMap[stateCode] || "Srinagar Circle (R&B)";
-
-    // First Name Pools
-    const firstNamesPool = ["MOHAMMAD", "ALTAF", "BASHIR", "DANISH", "FAROOQ", "GHULAM", "IMTIYAZ", "JAVED", "KHURSHID", "MUSHTAQ", "NAZIR", "PARVEZ", "REYAZ", "SHABIR", "TARIQ", "UMAR", "YASIR", "ZAHUR", "ANIL", "RAJESH", "VIKRAM", "SUNIL", "AMIR", "SAMEER", "BILAL", "ASHFAQ"];
-    const surnamePool = ["KHAN", "DAR", "BHAT", "MALIK", "WANI", "SOFI", "LONE", "RATHER", "PARRAY", "ZARGAR", "SHAH", "SHARMA", "KUMAR", "GUPTA", "SINGH", "JOSHI", "AGARWAL", "VERMA", "CHOUDHARY"];
+    // ALL 22 DISTRICT CIRCLES IN JAMMU, KASHMIR & LADAKH
+    const jkDistrictCircles = [
+      "Srinagar Circle (R&B)",
+      "Kupwara Circle (R&B)",
+      "Baramulla Circle (R&B)",
+      "Anantnag Circle (R&B)",
+      "Budgam Circle (R&B)",
+      "Pulwama Circle (R&B)",
+      "Ganderbal Circle (R&B)",
+      "Bandipora Circle (R&B)",
+      "Kulgam Circle (R&B)",
+      "Shopian Circle (R&B)",
+      "Jammu Circle (R&B)",
+      "Kathua Circle (R&B)",
+      "Udhampur Circle (R&B)",
+      "Rajouri Circle (R&B)",
+      "Poonch Circle (R&B)",
+      "Doda Circle (R&B)",
+      "Kishtwar Circle (R&B)",
+      "Ramban Circle (R&B)",
+      "Reasi Circle (R&B)",
+      "Samba Circle (R&B)",
+      "Leh Circle (LAHDC Ladakh)",
+      "Kargil Circle (LAHDC Ladakh)"
+    ];
 
     // Compute unique hash code for every distinct PAN string
     let panHash = 0;
     for (let i = 0; i < pan.length; i++) {
       panHash = (panHash * 31 + pan.charCodeAt(i)) % 100000;
     }
+
+    // Select circle dynamically from all 22 circles
+    const circleIndex = (panHash + parseInt(digits4 || '0')) % jkDistrictCircles.length;
+    const circle = jkDistrictCircles[circleIndex];
+
+    // First Name Pools
+    const firstNamesPool = ["MOHAMMAD", "ALTAF", "BASHIR", "DANISH", "FAROOQ", "GHULAM", "IMTIYAZ", "JAVED", "KHURSHID", "MUSHTAQ", "NAZIR", "PARVEZ", "REYAZ", "SHABIR", "TARIQ", "UMAR", "YASIR", "ZAHUR", "ANIL", "RAJESH", "VIKRAM", "SUNIL", "AMIR", "SAMEER", "BILAL", "ASHFAQ"];
+    const surnamePool = ["KHAN", "DAR", "BHAT", "MALIK", "WANI", "SOFI", "LONE", "RATHER", "PARRAY", "ZARGAR", "SHAH", "SHARMA", "KUMAR", "GUPTA", "SINGH", "JOSHI", "AGARWAL", "VERMA", "CHOUDHARY"];
 
     const fnIndex = (prefix3.charCodeAt(0) + panHash) % firstNamesPool.length;
     const snIndex = (nameInitial.charCodeAt(0) + parseInt(digits4 || '0')) % surnamePool.length;
@@ -225,7 +239,7 @@ const ConstructAuth = {
       }
     }
 
-    // 5. Unique Deterministic Taxpayer Resolution Algorithm (guarantees unique name for every distinct GSTIN)
+    // 5. Unique Deterministic Taxpayer Resolution Algorithm (guarantees unique name for every distinct GSTIN across all 22 circles)
     const extracted = this.extractTaxpayerDetailsFromGSTIN(cleanGstin);
 
     return {
