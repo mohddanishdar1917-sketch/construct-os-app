@@ -1,5 +1,5 @@
 /**
- * ConstructOS - Contractor Login & Portal Gate Controller with Official Govt Mod-36 GSTIN Checksum Engine & Owner/Company Name Auto-Fetcher
+ * ConstructOS - Contractor Login & Portal Gate Controller with Official Govt Mod-36 GSTIN Checksum Engine & Pure Live GST API Parser
  */
 
 const ConstructAuth = {
@@ -94,47 +94,7 @@ const ConstructAuth = {
     return chars[checkValue];
   },
 
-  // 100% UNIQUE DETERMINISTIC PAN & GSTIN TAXPAYER NAME EXTRACTOR ENGINE (Fetches Owner Name & Company Name ONLY)
-  extractTaxpayerDetailsFromGSTIN: function(gstin) {
-    const pan = gstin.substring(2, 12);
-    const prefix3 = pan.substring(0, 3);
-    const entityChar = pan.charAt(3); // 4th char of PAN (P=Proprietor, C=Company, F=Firm)
-    const nameInitial = pan.charAt(4); // 5th char of PAN (First letter of Surname/Name)
-    const digits4 = pan.substring(5, 9); // 4 numeric digits of PAN
-
-    // First Name Pools
-    const firstNamesPool = ["MOHAMMAD", "ALTAF", "BASHIR", "DANISH", "FAROOQ", "GHULAM", "IMTIYAZ", "JAVED", "KHURSHID", "MUSHTAQ", "NAZIR", "PARVEZ", "REYAZ", "SHABIR", "TARIQ", "UMAR", "YASIR", "ZAHUR", "ANIL", "RAJESH", "VIKRAM", "SUNIL", "AMIR", "SAMEER", "BILAL", "ASHFAQ"];
-    const surnamePool = ["KHAN", "DAR", "BHAT", "MALIK", "WANI", "SOFI", "LONE", "RATHER", "PARRAY", "ZARGAR", "SHAH", "SHARMA", "KUMAR", "GUPTA", "SINGH", "JOSHI", "AGARWAL", "VERMA", "CHOUDHARY"];
-
-    // Compute unique hash code for every distinct PAN string
-    let panHash = 0;
-    for (let i = 0; i < pan.length; i++) {
-      panHash = (panHash * 31 + pan.charCodeAt(i)) % 100000;
-    }
-
-    const fnIndex = (prefix3.charCodeAt(0) + panHash) % firstNamesPool.length;
-    const snIndex = (nameInitial.charCodeAt(0) + parseInt(digits4 || '0')) % surnamePool.length;
-
-    const firstName = firstNamesPool[fnIndex];
-    const surname = surnamePool[snIndex];
-    const ownerName = `${firstName} ${surname}`;
-
-    let companyName = "";
-    if (entityChar === 'C') {
-      companyName = `${prefix3} ENTERPRISE INFRASTRUCTURE & CONSTRUCTIONS PVT LTD`;
-    } else if (entityChar === 'F') {
-      companyName = `${prefix3} ENGINEERING & CONTRACTS FIRM`;
-    } else {
-      companyName = `${firstName} ${surname} ${prefix3} INFRASTRUCTURE BUILDERS`;
-    }
-
-    return {
-      legalName: ownerName,
-      tradeName: companyName
-    };
-  },
-
-  // LIVE GST PORTAL QUERY ENGINE WITH FLASK BACKEND & MULTI-PROXY API FALLBACK & MOD-36 CHECKSUM
+  // LIVE GST PORTAL QUERY ENGINE (NO MOCK/HARDCODED FALLBACK NAMES)
   fetchLiveGSTPortalDetails: async function(gstin) {
     const cleanGstin = gstin.trim().toUpperCase();
     
@@ -168,7 +128,7 @@ const ConstructAuth = {
       };
     }
 
-    // 4. Query Flask/Backend API Endpoints (/api/fetch-gstin)
+    // 4. Query Live Backend API Endpoints (/api/fetch-gstin)
     const apiEndpoints = [
       '/api/fetch-gstin',
       'http://localhost:5000/api/fetch-gstin',
@@ -199,14 +159,10 @@ const ConstructAuth = {
       }
     }
 
-    // 5. Unique Deterministic Taxpayer Resolution Algorithm (Fetches OWNER NAME and COMPANY NAME ONLY)
-    const extracted = this.extractTaxpayerDetailsFromGSTIN(cleanGstin);
-
+    // STRICT NO-MOCK RULE: Return error if live GST API returned no taxpayer data
     return {
-      isValid: true,
-      gstin: cleanGstin,
-      legalName: extracted.legalName,
-      tradeName: extracted.tradeName
+      isValid: false,
+      error: "Could not retrieve details from live GST API provider. Please check the entered GSTIN."
     };
   },
 
@@ -242,7 +198,7 @@ const ConstructAuth = {
 
     badge.style.display = 'inline-flex';
     badge.className = 'badge cyan';
-    badge.innerHTML = '⏳ Querying Backend /api/fetch-gstin...';
+    badge.innerHTML = '⏳ Querying Live GST API Provider...';
 
     const gstResult = await this.fetchLiveGSTPortalDetails(clean);
 
@@ -270,7 +226,7 @@ const ConstructAuth = {
       badge.className = 'badge rose';
       badge.innerHTML = `❌ ${gstResult.error || 'Incorrect GSTIN Number'}`;
 
-      // STRICTLY CLEAR OWNER AND COMPANY NAME WHEN GSTIN IS INVALID
+      // STRICTLY CLEAR OWNER AND COMPANY NAME WHEN GSTIN IS INVALID OR NOT FOUND
       if (nameEl) {
         nameEl.value = "";
         nameEl.style.borderColor = "var(--accent-rose)";
