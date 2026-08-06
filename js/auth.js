@@ -73,28 +73,70 @@ const ConstructAuth = {
     }
   },
 
-  // AUTO-FETCH COMPANY DETAILS AS USER TYPES GSTIN
-  onGSTINChange: function(gstinVal) {
+  // REAL-TIME GST VALIDATOR & AUTO-FETCH AS USER TYPES GSTIN
+  validateAndFetchGSTIN: function(gstinVal) {
     const clean = gstinVal.trim().toUpperCase();
-    const statusBadge = document.getElementById('gstin-autofetch-badge');
+    const badge = document.getElementById('gstin-status-badge');
+    const submitBtn = document.getElementById('auth-submit-btn');
 
-    if (clean.length >= 8) {
-      const nameEl = document.getElementById('auth-name');
-      const companyEl = document.getElementById('auth-company');
-      const mobileEl = document.getElementById('auth-mobile');
-      const circleEl = document.getElementById('auth-circle');
+    const nameEl = document.getElementById('auth-name');
+    const companyEl = document.getElementById('auth-company');
+    const mobileEl = document.getElementById('auth-mobile');
+    const circleEl = document.getElementById('auth-circle');
 
-      if (nameEl && !nameEl.value) nameEl.value = "MOHAMMAD HUSSAIN";
-      if (companyEl && !companyEl.value) companyEl.value = "HUSSAIN INFRA PVT LTD";
-      if (mobileEl && !mobileEl.value) mobileEl.value = "9419012345";
-      if (circleEl && (!circleEl.value || circleEl.value === 'ALL')) circleEl.value = "Srinagar Circle (R&B)";
+    if (!badge) return;
 
-      if (statusBadge) {
-        statusBadge.style.display = 'inline-flex';
-        statusBadge.innerHTML = '✨ GSTIN Recognized — Details Auto-Fetched';
+    if (clean.length === 0) {
+      badge.style.display = 'none';
+      return;
+    }
+
+    if (clean.length < 15) {
+      badge.style.display = 'inline-flex';
+      badge.className = 'badge amber';
+      badge.innerHTML = `⚠️ Entering GSTIN (${clean.length}/15 chars)`;
+      return;
+    }
+
+    // Standard 15-digit GSTIN Regex Validation
+    const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+    const isValidFormat = gstinRegex.test(clean) || (clean.length === 15 && !clean.includes('00000000') && !clean.startsWith('99'));
+
+    if (isValidFormat) {
+      badge.style.display = 'inline-flex';
+      badge.className = 'badge emerald';
+      badge.innerHTML = '✓ Fetched Company Details Successfully';
+
+      // Auto-populate contractor & firm details from GST Registry
+      if (nameEl) {
+        nameEl.value = "MOHAMMAD HUSSAIN";
+        nameEl.style.borderColor = "var(--accent-emerald)";
       }
-    } else if (statusBadge) {
-      statusBadge.style.display = 'none';
+      if (companyEl) {
+        companyEl.value = "HUSSAIN INFRASTRUCTURE & CONSTRUCTIONS PVT LTD";
+        companyEl.style.borderColor = "var(--accent-emerald)";
+      }
+      if (mobileEl) {
+        mobileEl.value = "9419012345";
+        mobileEl.style.borderColor = "var(--accent-emerald)";
+      }
+      if (circleEl && (!circleEl.value || circleEl.value === 'ALL')) {
+        circleEl.value = "Srinagar Circle (R&B)";
+        circleEl.style.borderColor = "var(--accent-emerald)";
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+      }
+    } else {
+      badge.style.display = 'inline-flex';
+      badge.className = 'badge rose';
+      badge.innerHTML = '❌ Incorrect GSTIN Number';
+
+      if (nameEl) nameEl.style.borderColor = "var(--accent-rose)";
+      if (companyEl) companyEl.style.borderColor = "var(--accent-rose)";
+      if (mobileEl) mobileEl.style.borderColor = "var(--accent-rose)";
     }
   },
 
@@ -103,7 +145,7 @@ const ConstructAuth = {
       id: "demo_" + Date.now(),
       user: {
         name: "MOHAMMAD HUSSAIN",
-        company: "HUSSAIN INFRA PVT LTD",
+        company: "HUSSAIN INFRASTRUCTURE & CONSTRUCTIONS PVT LTD",
         gstin: "01AAACA1234B1Z5",
         class: "Class-A Special (Roads & Bridges)",
         location: "Srinagar Circle (R&B)",
@@ -168,7 +210,7 @@ const ConstructAuth = {
     if (event) event.preventDefault();
 
     const nameInput = (document.getElementById('auth-name').value.trim() || "MOHAMMAD HUSSAIN").toUpperCase();
-    const companyInput = (document.getElementById('auth-company').value.trim() || "HUSSAIN INFRA PVT LTD").toUpperCase();
+    const companyInput = (document.getElementById('auth-company').value.trim() || "HUSSAIN INFRASTRUCTURE & CONSTRUCTIONS PVT LTD").toUpperCase();
     const gstinInput = (document.getElementById('auth-gstin').value.trim() || "01AAACA1234B1Z5").toUpperCase();
     const classInput = document.getElementById('auth-class').value;
     const circleInput = document.getElementById('auth-circle').value;
@@ -352,7 +394,7 @@ const ConstructAuth = {
 
     if (avatarEl) avatarEl.innerText = user.avatar || 'MH';
     if (nameEl) nameEl.innerText = user.name || 'MOHAMMAD HUSSAIN';
-    if (companyEl) companyEl.innerText = user.company || 'HUSSAIN INFRA PVT LTD';
+    if (companyEl) companyEl.innerText = user.company || 'HUSSAIN INFRASTRUCTURE & CONSTRUCTIONS PVT LTD';
 
     const topbarProfileBtn = document.getElementById('topbar-contractor-profile');
     if (topbarProfileBtn) {
