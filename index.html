@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ConstructOS — The AI Operating System for Modern Contractors</title>
+  <meta name="description" content="All-in-one AI platform for contractors: Tender Intelligence, BOQ Analyzer, Financials, GST, Project Management & Document Generation.">
+
+  <!-- PWA Manifest & Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#06b6d4">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ConstructOS">
+  <link rel="apple-touch-icon" href="assets/logo.jpg">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/jpg" href="assets/logo.jpg">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- =========================================================================
+       1. STANDALONE CONTRACTOR LANDING & LOGIN PORTAL (Displayed when unauthenticated)
+       ========================================================================= -->
+  <div id="login-screen" style="position: fixed; inset: 0; width: 100vw; height: 100vh; overflow-y: auto; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 16px; box-sizing: border-box; background: #07090e; background-image: radial-gradient(circle at 50% 20%, rgba(6, 182, 212, 0.22) 0%, transparent 60%), radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.18) 0%, transparent 60%);">
+    
+    <div style="width: 100%; max-width: 540px; margin: auto; background: rgba(15,20,32,0.96); backdrop-filter: blur(24px); border: 1.5px solid rgba(6,182,212,0.4); border-radius: var(--radius-lg); padding: 24px; box-shadow: 0 0 70px rgba(6,182,212,0.35);">
+      
+      <!-- Brand Header centered -->
+      <div style="text-align: center; margin-bottom: 16px;">
+        <div class="brand-logo-circle" style="width: 52px; height: 52px; min-width: 52px; min-height: 52px; margin: 0 auto 8px; border-width: 2px;">
+          <img src="assets/logo.jpg" alt="ConstructOS AI Logo" class="brand-logo-img">
+        </div>
+        <h1 style="font-size: 24px; font-weight: 800; background: linear-gradient(90deg, #ffffff, #a5f3fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">ConstructOS</h1>
+        <p style="font-size: 12px; color: var(--text-dim); margin-top: 2px; font-weight: 500;">The AI Operating System for Modern Contractors</p>
+      </div>
+
+      <!-- PORTAL TAB SWITCHER BAR -->
+      <div style="display: flex; background: rgba(15,23,42,0.8); padding: 4px; border-radius: var(--radius-md); border: 1px solid var(--border-glass); margin-bottom: 18px;">
+        <button id="tab-btn-demo" type="button" style="flex: 1; padding: 10px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo)); color: #fff; border: 1px solid var(--accent-cyan);" onclick="ConstructAuth.switchLoginTab('demo')">
+          ✨ Free Demo Account
+        </button>
+        <button id="tab-btn-custom" type="button" style="flex: 1; padding: 10px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; background: transparent; color: var(--text-dim); border: 1px solid transparent;" onclick="ConstructAuth.switchLoginTab('custom')">
+          🏢 Company Account Login
+        </button>
+      </div>
+
+      <!-- TAB 1: FREE DEMO ACCOUNT PORTAL -->
+      <div id="login-tab-demo" style="display: block;">
+        <div style="background: rgba(6,182,212,0.06); border: 1px solid rgba(6,182,212,0.25); border-radius: var(--radius-md); padding: 16px; text-align: center; margin-bottom: 16px;">
+          <div style="font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 4px;">🚀 Instant 1-Click Workspace Access</div>
+          <p style="font-size: 11px; color: var(--text-dim); margin-bottom: 14px;">Explore live AI tender matching, BOQ risk calculations, and Form 26 RA bill generators instantly.</p>
+          
+          <button type="button" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 14px; font-weight: 700; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo)); box-shadow: 0 0 25px rgba(6,182,212,0.4);" onclick="ConstructAuth.createFreeDemoAccount()">
+            ✨ Launch Free Demo Account
+          </button>
+        </div>
+
+        <div style="display: flex; justify-content: space-around; font-size: 11px; color: var(--text-muted); text-align: center;">
+          <div>📍 22 Districts J&K & Ladakh</div>
+          <div>📄 JKTenders & PMGSY Scanners</div>
+          <div>💰 GST 18% Compliant</div>
+        </div>
+      </div>
+
+      <!-- TAB 2: COMPANY REGISTRATION FORM PORTAL -->
+      <div id="login-tab-custom" style="display: none;">
+        <form onsubmit="ConstructAuth.submitCustomContractor(event)" style="display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Contractor / Owner Name</label>
+              <input id="auth-name" type="text" class="text-input" style="width: 100%; padding: 8px 10px; font-size: 12px;" placeholder="e.g. Danish Ahmad" required>
+            </div>
+
+            <div>
+              <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Company / Firm Name</label>
+              <input id="auth-company" type="text" class="text-input" style="width: 100%; padding: 8px 10px; font-size: 12px;" placeholder="e.g. Ahmad Infra Pvt Ltd" required>
+            </div>
+
+            <div>
+              <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">GSTIN Number</label>
+              <input id="auth-gstin" type="text" class="text-input" style="width: 100%; padding: 8px 10px; font-size: 12px;" placeholder="e.g. 01AAACA1234B1Z5" required>
+            </div>
+
+            <div>
+              <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Contractor License Class</label>
+              <select id="auth-class" class="select-input" style="width: 100%; padding: 8px 10px; font-size: 12px;">
+                <option value="Class-A Special (Roads & Bridges)">Class-A Special (Roads & Bridges)</option>
+                <option value="Class-B Building Contractor">Class-B Building Contractor</option>
+                <option value="Class-C Rural PMGSY Contractor">Class-C Rural PMGSY Contractor</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Base District (J&K & Ladakh)</label>
+              <select id="auth-location" class="select-input" style="width: 100%; padding: 8px 10px; font-size: 12px;">
+                <option value="Srinagar, J&K">Srinagar</option>
+                <option value="Anantnag, J&K">Anantnag</option>
+                <option value="Baramulla, J&K">Baramulla</option>
+                <option value="Budgam, J&K">Budgam</option>
+                <option value="Doda, J&K">Doda</option>
+                <option value="Ganderbal, J&K">Ganderbal</option>
+                <option value="Jammu, J&K">Jammu</option>
+                <option value="Kargil (Ladakh)">Kargil (Ladakh)</option>
+                <option value="Kathua, J&K">Kathua</option>
+                <option value="Kishtwar, J&K">Kishtwar</option>
+                <option value="Kulgam, J&K">Kulgam</option>
+                <option value="Kupwara, J&K">Kupwara</option>
+                <option value="Leh (Ladakh)">Leh (Ladakh)</option>
+                <option value="Poonch, J&K">Poonch</option>
+                <option value="Pulwama, J&K">Pulwama</option>
+                <option value="Rajouri, J&K">Rajouri</option>
+                <option value="Ramban, J&K">Ramban</option>
+                <option value="Reasi, J&K">Reasi</option>
+                <option value="Samba, J&K">Samba</option>
+                <option value="Shopian, J&K">Shopian</option>
+                <option value="Udhampur, J&K">Udhampur</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Est. Monthly Revenue (₹)</label>
+              <input id="auth-revenue" type="number" class="text-input" style="width: 100%; padding: 8px 10px; font-size: 12px;" placeholder="e.g. 3500000" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 13px; margin-top: 4px;">
+            🚀 Login to Enterprise Workspace
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- =========================================================================
+       2. CONSTRUCTOS ENTERPRISE APP SHELL (Revealed only after authentication)
+       ========================================================================= -->
+  <div id="app-root" style="display: none;">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand-header">
+        <div class="brand-logo-circle">
+          <img src="assets/logo.jpg" alt="ConstructOS AI Logo" class="brand-logo-img">
+        </div>
+        <div class="brand-info">
+          <h1>ConstructOS</h1>
+          <div class="brand-tagline">AI System for Contractors</div>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">Core Operating Modules</div>
+
+        <a class="nav-item active" data-tab="dashboard" onclick="ConstructApp.switchTab('dashboard')">
+          <span class="nav-icon">📊</span>
+          <span>Executive Dashboard</span>
+        </a>
+
+        <a class="nav-item" data-tab="tenders" onclick="ConstructApp.switchTab('tenders')">
+          <span class="nav-icon">🎯</span>
+          <span>Tender Intelligence</span>
+          <span class="nav-badge cyan">Live Matches</span>
+        </a>
+
+        <a class="nav-item" data-tab="boq" onclick="ConstructApp.switchTab('boq')">
+          <span class="nav-icon">📐</span>
+          <span>BOQ Profit Analyzer</span>
+        </a>
+
+        <a class="nav-item" data-tab="projects" onclick="ConstructApp.switchTab('projects')">
+          <span class="nav-icon">🏗️</span>
+          <span>Project PM & Gantt</span>
+          <span class="nav-badge cyan">Active</span>
+        </a>
+
+        <div class="nav-label">Finance & Compliance</div>
+
+        <a class="nav-item" data-tab="finance" onclick="ConstructApp.switchTab('finance')">
+          <span class="nav-icon">💰</span>
+          <span>Finance & GST Hub</span>
+        </a>
+
+        <a class="nav-item" data-tab="inventory" onclick="ConstructApp.switchTab('inventory')">
+          <span class="nav-icon">📦</span>
+          <span>Stock & Equipment</span>
+        </a>
+
+        <a class="nav-item" data-tab="documents" onclick="ConstructApp.switchTab('documents')">
+          <span class="nav-icon">📄</span>
+          <span>AI Doc Generator</span>
+        </a>
+
+        <a class="nav-item" data-tab="crm" onclick="ConstructApp.switchTab('crm')">
+          <span class="nav-icon">👥</span>
+          <span>Contractor Directory</span>
+        </a>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="user-card" style="cursor: pointer;" onclick="ConstructAuth.logoutContractor()">
+          <div class="user-avatar">CO</div>
+          <div class="user-details">
+            <div class="user-name">Contractor Account</div>
+            <div class="user-company">Click to Log Out</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Shell -->
+    <div class="main-wrapper">
+      <!-- Topbar Header -->
+      <header class="topbar">
+        <div class="topbar-search">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="Search tenders, projects, BOQ codes, invoices..." onkeyup="if(event.key === 'Enter') ConstructApp.openAIDrawer(this.value)">
+        </div>
+
+        <div class="topbar-actions">
+          <button id="pwa-install-topbar-btn" class="btn btn-primary btn-sm" style="display: none; align-items: center; gap: 6px; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo)); box-shadow: 0 0 15px var(--accent-cyan-glow);" onclick="PWAInstaller.triggerNativeInstall()">
+            📱 Download App
+          </button>
+
+          <button id="topbar-contractor-profile" class="btn btn-secondary btn-sm" onclick="ConstructAuth.logoutContractor()">
+            👤 Log Out / Switch Account
+          </button>
+
+          <button class="ai-copilot-btn" onclick="ConstructApp.openAIDrawer('What would you like to do today?')">
+            <span>✨</span> Ask ConstructOS AI
+          </button>
+
+          <button class="icon-btn" title="Notifications" onclick="alert('System Notifications: Contractor Workspace Active')">
+            <span>🔔</span>
+            <span class="badge-dot"></span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Page Content Viewport -->
+      <main id="main-content" class="content-area">
+        <!-- Rendered dynamically by app.js -->
+      </main>
+    </div>
+
+    <!-- AI Copilot Drawer -->
+    <div id="ai-drawer" class="ai-drawer">
+      <div class="ai-drawer-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="brand-logo-circle" style="width: 34px; height: 34px; min-width: 34px; min-height: 34px;">
+            <img src="assets/logo.jpg" alt="ConstructOS AI Logo" class="brand-logo-img">
+          </div>
+          <div>
+            <h3 style="font-size: 15px; font-weight: 700; color: #fff;">ConstructOS AI Copilot</h3>
+            <span style="font-size: 11px; color: var(--accent-emerald);">● Online & Syncing Contractor Data</span>
+          </div>
+        </div>
+        <button class="modal-close" onclick="ConstructApp.closeAIDrawer()">✕</button>
+      </div>
+
+      <div id="ai-messages-list" class="ai-messages-list">
+        <div class="ai-msg bot">
+          Good Evening 👋! I'm your ConstructOS AI Assistant. Your contractor workspace is loaded with 100% dynamic accuracy. How can I assist your operations today?
+        </div>
+      </div>
+
+      <div class="ai-drawer-footer">
+        <input id="ai-drawer-input" type="text" placeholder="Ask AI e.g. Am I eligible for TND-2026-8891?">
+        <button class="btn btn-primary btn-sm" onclick="ConstructApp.sendAIMessage()">Send</button>
+      </div>
+    </div>
+
+    <!-- Modal Overlay Container -->
+    <div id="modal-overlay" class="modal-overlay" onclick="if(event.target === this) ConstructApp.closeModal()">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 id="modal-title" class="modal-title">Modal Title</h3>
+          <button class="modal-close" onclick="ConstructApp.closeModal()">✕</button>
+        </div>
+        <div id="modal-body">
+          <!-- Dynamic Content -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Native PWA Download Banner -->
+    <div id="pwa-install-banner" style="display: none; position: fixed; bottom: 20px; right: 20px; z-index: 99999; background: rgba(15,20,32,0.96); backdrop-filter: blur(20px); border: 1.5px solid var(--accent-cyan); border-radius: 14px; padding: 14px 18px; box-shadow: 0 0 40px rgba(6,182,212,0.4); align-items: center; gap: 14px; max-width: 420px;">
+      <img src="assets/logo.jpg" alt="ConstructOS App" style="width: 42px; height: 42px; border-radius: 10px; border: 1px solid var(--accent-cyan);">
+      <div style="flex: 1;">
+        <div style="font-size: 13px; font-weight: 700; color: #fff;">ConstructOS Native App</div>
+        <div id="pwa-banner-text" style="font-size: 11px; color: var(--text-dim);">Download ConstructOS App on your device!</div>
+      </div>
+      <button id="pwa-banner-action-btn" class="btn btn-primary btn-sm" style="font-size: 12px; font-weight: 700; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo)); box-shadow: 0 0 15px var(--accent-cyan-glow);" onclick="PWAInstaller.triggerNativeInstall()">
+        📱 Download
+      </button>
+      <button style="background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 16px; padding: 2px;" onclick="PWAInstaller.hideBanner()">✕</button>
+    </div>
+
+  </div>
+
+  <!-- Application Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/ai-engine.js"></script>
+  <script src="js/modules/dashboard.js"></script>
+  <script src="js/modules/tenders.js"></script>
+  <script src="js/modules/boq.js"></script>
+  <script src="js/modules/projects.js"></script>
+  <script src="js/modules/finance.js"></script>
+  <script src="js/modules/inventory.js"></script>
+  <script src="js/modules/documents.js"></script>
+  <script src="js/modules/crm.js"></script>
+  <script src="js/pwa-installer.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

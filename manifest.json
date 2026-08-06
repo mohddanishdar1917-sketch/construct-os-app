@@ -1,0 +1,24 @@
+{
+  "name": "ConstructOS — AI Operating System for Contractors",
+  "short_name": "ConstructOS",
+  "description": "The AI Operating System for Modern Contractors. Tender Intelligence, BOQ Analyzer, Financials, GST & Project Management.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#07090e",
+  "theme_color": "#06b6d4",
+  "icons": [
+    {
+      "src": "assets/logo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
