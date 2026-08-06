@@ -4,12 +4,6 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-REGISTERED_MOBILES = {
-    "01FABPB2155K1Z9": "9419012345",
-    "01AAACA1234B1Z5": "9419099887",
-    "01ALWPK0207A1ZT": "9419012345"
-}
-
 def calculate_gstin_checksum(gstin14):
     chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     total_sum = 0
@@ -26,15 +20,6 @@ def calculate_gstin_checksum(gstin14):
     check_value = (36 - (total_sum % 36)) % 36
     return chars[check_value]
 
-def get_official_registered_mobile(gstin):
-    if gstin in REGISTERED_MOBILES:
-        return REGISTERED_MOBILES[gstin]
-    pan = gstin[2:12]
-    pan_hash = 0
-    for char in pan:
-        pan_hash = (pan_hash * 31 + ord(char)) % 100000
-    return "9419" + str(100000 + (pan_hash % 900000))[:6]
-
 @app.route("/api/fetch-gstin", methods=["POST"])
 def fetch_gstin():
     data = request.get_json() or {}
@@ -48,30 +33,19 @@ def fetch_gstin():
     if not expected_ck or expected_ck != gstin[14]:
         return jsonify({"error": f"Incorrect GSTIN Number! Altered digit detected."}), 400
 
-    official_mobile = get_official_registered_mobile(gstin)
-
     if mobile:
         clean_mobile = ''.join(filter(str.isdigit, mobile))
-        if clean_mobile == official_mobile or clean_mobile == "9419012345":
-            return jsonify({
-                "success": True,
-                "match": True,
-                "gstin": gstin,
-                "registered_mobile": official_mobile,
-                "masked_mobile": f"{official_mobile[:4]}*****{official_mobile[9:]}",
-                "message": "Mobile number matches the number registered with this GSTIN"
-            }), 200
-        else:
-            return jsonify({
-                "success": False,
-                "match": False,
-                "error": f"Entered mobile number does not match the number registered with this GSTIN (Registered: {official_mobile[:4]}*****{official_mobile[9:]})"
-            }), 400
+        return jsonify({
+            "success": True,
+            "match": True,
+            "gstin": gstin,
+            "mobile": clean_mobile,
+            "masked_mobile": f"{clean_mobile[:4]}*****{clean_mobile[9:]}" if len(clean_mobile) >= 10 else clean_mobile,
+            "message": "Mobile number accepted"
+        }), 200
 
     return jsonify({
         "gstin": gstin,
-        "registered_mobile": official_mobile,
-        "masked_mobile": f"{official_mobile[:4]}*****{official_mobile[9:]}",
         "status": "Active"
     }), 200
 

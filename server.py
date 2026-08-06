@@ -6,12 +6,6 @@ import json
 PORT = 8080
 DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 
-REGISTERED_MOBILES = {
-    "01FABPB2155K1Z9": "9419012345",
-    "01AAACA1234B1Z5": "9419099887",
-    "01ALWPK0207A1ZT": "9419012345"
-}
-
 def calculate_gstin_checksum(gstin14):
     chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     total_sum = 0
@@ -27,15 +21,6 @@ def calculate_gstin_checksum(gstin14):
         total_sum += (quotient + remainder)
     check_value = (36 - (total_sum % 36)) % 36
     return chars[check_value]
-
-def get_official_registered_mobile(gstin):
-    if gstin in REGISTERED_MOBILES:
-        return REGISTERED_MOBILES[gstin]
-    pan = gstin[2:12]
-    pan_hash = 0
-    for char in pan:
-        pan_hash = (pan_hash * 31 + ord(char)) % 100000
-    return "9419" + str(100000 + (pan_hash % 900000))[:6]
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -74,42 +59,16 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     self.wfile.write(json.dumps({"error": f"Incorrect GSTIN Number! Altered digit detected."}).encode('utf-8'))
                     return
 
-                official_mobile = get_official_registered_mobile(gstin)
-
-                if mobile:
-                    clean_mobile = ''.join(filter(str.isdigit, mobile))
-                    if clean_mobile == official_mobile or clean_mobile == "9419012345":
-                        response_body = {
-                            "success": True,
-                            "match": True,
-                            "gstin": gstin,
-                            "registered_mobile": official_mobile,
-                            "masked_mobile": f"{official_mobile[:4]}*****{official_mobile[9:]}",
-                            "message": "Mobile number matches the number registered with this GSTIN"
-                        }
-                        status_code = 200
-                    else:
-                        response_body = {
-                            "success": False,
-                            "match": False,
-                            "error": f"Entered mobile number does not match the number registered with this GSTIN (Registered: {official_mobile[:4]}*****{official_mobile[9:]})"
-                        }
-                        status_code = 400
-
-                    self.send_response(status_code)
-                    self.send_header('Content-Type', 'application/json')
-                    self.send_header('Access-Control-Allow-Origin', '*')
-                    self.end_headers()
-                    self.wfile.write(json.dumps(response_body).encode('utf-8'))
-                    return
+                clean_mobile = ''.join(filter(str.isdigit, mobile)) if mobile else ""
 
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
                 self.send_header('Access-Control-Allow-Origin', '*')
                 self.end_headers()
                 self.wfile.write(json.dumps({
+                    "success": True,
                     "gstin": gstin,
-                    "registered_mobile": official_mobile,
+                    "mobile": clean_mobile,
                     "status": "Active"
                 }).encode('utf-8'))
 

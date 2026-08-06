@@ -1,6 +1,6 @@
 /**
  * ConstructOS - Contractor Login & Portal Gate Controller
- * Manual Entry Workflow with Mod-36 Checksum & Registered Mobile GST Verification Gate
+ * Manual Entry Workflow with Mod-36 Checksum Validation & Free 10-Digit Mobile Entry
  */
 
 const ConstructAuth = {
@@ -93,25 +93,6 @@ const ConstructAuth = {
     
     const checkValue = (36 - (sum % 36)) % 36;
     return chars[checkValue];
-  },
-
-  // GET REGISTERED MOBILE ASSOCIATED WITH GSTIN
-  getRegisteredMobileForGSTIN: function(gstin) {
-    const registry = {
-      "01FABPB2155K1Z9": "9419012345",
-      "01AAACA1234B1Z5": "9419099887",
-      "01ALWPK0207A1ZT": "9419012345"
-    };
-
-    if (registry[gstin]) return registry[gstin];
-
-    // Compute deterministic mobile for any valid GSTIN
-    const pan = gstin.substring(2, 12);
-    let panHash = 0;
-    for (let i = 0; i < pan.length; i++) {
-      panHash = (panHash * 31 + pan.charCodeAt(i)) % 100000;
-    }
-    return "9419" + String(100000 + (panHash % 900000)).slice(0, 6);
   },
 
   // REAL-TIME FORMAT & CHECKSUM VALIDATOR AS USER TYPES GSTIN MANUALLY
@@ -236,7 +217,7 @@ const ConstructAuth = {
     }
   },
 
-  // SUBMIT CONTRACTOR WITH REGISTERED MOBILE NUMBER GST VERIFICATION & OTP GATE
+  // SUBMIT CONTRACTOR WITH MANUAL ENTRY WORKFLOW & FREE 10-DIGIT MOBILE ENTRY
   submitCustomContractor: function(event) {
     if (event) event.preventDefault();
 
@@ -266,25 +247,16 @@ const ConstructAuth = {
       return;
     }
 
-    // 3. Check 10-Digit Mobile Number Input
+    // 3. Simple 10-Digit Mobile Number Validation (allows any 10-digit number freely)
     if (!mobileInput || mobileInput.length !== 10 || !/^\d{10}$/.test(mobileInput)) {
-      alert("Please enter a valid 10-digit Mobile Number registered with your GST.");
-      return;
-    }
-
-    // 4. VERIFY REGISTERED MOBILE NUMBER ASSOCIATED WITH GSTIN
-    const officialRegisteredMobile = this.getRegisteredMobileForGSTIN(gstinInput);
-    
-    // Check mobile verification rule: Mobile number entered must match registered mobile for this GSTIN
-    if (mobileInput !== officialRegisteredMobile && mobileInput !== "9419012345") {
-      alert(`❌ GST Mobile Verification Failed!\n\nThe mobile number entered (${mobileInput}) does not match the official mobile number registered with GSTIN ${gstinInput} (${officialRegisteredMobile.slice(0, 4)}*****${officialRegisteredMobile.slice(9)}).\n\nOTP can only be sent to the registered mobile number associated with this GSTIN.`);
+      alert("Please enter a valid 10-digit Mobile Number.");
       return;
     }
 
     // Generate Fresh Unique 6-Digit OTP Code
     this.currentOTP = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Fetch GST Firm Details & Historical Tenders from Data Engine
+    // Hydrate GST Firm Details & Historical Tenders
     this.pendingGSTData = ConstructData.fetchGSTDetailsAndTenders(
       gstinInput, nameInput, companyInput, classInput, circleInput, mobileInput, deptInput
     );
@@ -303,8 +275,8 @@ const ConstructAuth = {
           <img src="assets/logo.jpg" alt="ConstructOS" class="brand-logo-img">
         </div>
         
-        <span class="badge cyan" style="font-size: 11px; padding: 3px 8px;">🏛️ Official GSTN Mobile OTP Verification</span>
-        <h3 style="font-size: 18px; font-weight: 800; color: #fff; margin-top: 8px;">Verify GSTIN Ownership & Fetch Records</h3>
+        <span class="badge cyan" style="font-size: 11px; padding: 3px 8px;">🏛️ Mobile OTP Security Verification</span>
+        <h3 style="font-size: 18px; font-weight: 800; color: #fff; margin-top: 8px;">Verify Mobile Ownership</h3>
         <p style="font-size: 12px; color: var(--text-dim); margin-top: 4px; margin-bottom: 14px;">
           GSTIN: <strong style="color: var(--accent-cyan);">${data.gstin}</strong> • Registered: <strong style="color: #fff;">${data.regDate}</strong>
         </p>
@@ -345,7 +317,7 @@ const ConstructAuth = {
         <!-- Mobile OTP Input Section -->
         <div style="background: rgba(15,23,42,0.8); border: 1px solid var(--border-glass); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px;">
           <div style="font-size: 12px; color: var(--text-main); margin-bottom: 8px;">
-            Enter 6-Digit Security OTP code sent to registered mobile:
+            Enter 6-Digit Security OTP code sent to your mobile:
           </div>
           
           <input id="gst-otp-input" type="text" class="text-input" style="width: 200px; text-align: center; font-size: 22px; font-weight: 800; letter-spacing: 4px; border-color: var(--accent-cyan);" value="${otpCode}" maxlength="6" required>
@@ -358,17 +330,17 @@ const ConstructAuth = {
     `;
 
     if (window.ConstructApp) {
-      window.ConstructApp.openModal("🔐 GSTIN & Registered Mobile OTP Verification", modalBodyHtml);
+      window.ConstructApp.openModal("🔐 Mobile OTP Security Verification", modalBodyHtml);
     }
   },
 
-  // 2. CONFIRM OTP & HYDRATE WORKSPACE WITH ALL ALLOCATED & HISTORICAL TENDERS
+  // CONFIRM OTP & HYDRATE WORKSPACE WITH ALL ALLOCATED & HISTORICAL TENDERS
   confirmGSTOTPAndLogin: function() {
     const otpInputEl = document.getElementById('gst-otp-input');
     const enteredOTP = otpInputEl ? otpInputEl.value.trim() : this.currentOTP;
 
     if (enteredOTP !== this.currentOTP) {
-      alert(`Invalid OTP! Please enter the 6-digit code (${this.currentOTP}) sent to your registered mobile.`);
+      alert(`Invalid OTP! Please enter the 6-digit code (${this.currentOTP}) sent to your mobile.`);
       return;
     }
 
