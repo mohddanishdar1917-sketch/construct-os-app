@@ -24,7 +24,7 @@ window.ConstructApp = {
 
   switchTab: function(tabName) {
     if (!ConstructData.isLoggedIn) {
-      ConstructAuth.showLoginModal();
+      ConstructAuth.showLandingGate();
       return;
     }
 
@@ -53,8 +53,8 @@ window.ConstructApp = {
           <div style="font-size: 48px;">🔐</div>
           <h2 style="font-size: 22px; font-weight: 700; color: #fff;">Contractor Login Required</h2>
           <p style="font-size: 14px; color: var(--text-dim); max-width: 450px;">Please enter your company credentials or create a free demo account to access ConstructOS.</p>
-          <button class="btn btn-primary" onclick="ConstructAuth.showLoginModal()">
-            🚀 Open Contractor Login Modal
+          <button class="btn btn-primary" onclick="ConstructAuth.showLandingGate()">
+            🚀 Open Contractor Login Portal
           </button>
         </div>
       `;
@@ -98,60 +98,15 @@ window.ConstructApp = {
     }
   },
 
-  // Modal Dialog Controllers
-  openTenderModal: function(tenderId) {
-    if (!ConstructData.isLoggedIn) {
-      ConstructAuth.showLoginModal();
-      return;
-    }
-
-    const tender = ConstructData.tenders.find(t => t.id === tenderId);
-    if (!tender) return;
-
-    const analysis = ConstructAI.analyzeTender(tenderId);
-
+  // Generic & Dynamic Modal Dialog Controllers
+  openModal: function(title, bodyHtml) {
     const titleEl = document.getElementById('modal-title');
     const bodyEl = document.getElementById('modal-body');
     const overlayEl = document.getElementById('modal-overlay');
 
     if (titleEl && bodyEl && overlayEl) {
-      titleEl.innerText = `AI Tender Analysis: ${tender.id}`;
-      bodyEl.innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; background: rgba(6,182,212,0.08); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--accent-cyan-glow);">
-          <div>
-            <h3 style="font-size: 16px; font-weight: 700; color: #fff;">${tender.title}</h3>
-            <p style="font-size: 12px; color: var(--text-dim);">Department: ${tender.department} (${tender.district})</p>
-          </div>
-          <div style="text-align: right;">
-            <div style="font-size: 20px; font-weight: 800; color: var(--accent-emerald);">${analysis.winProbability}</div>
-            <span class="badge emerald">AI Estimated Win Probability</span>
-          </div>
-        </div>
-
-        <h4 style="font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 10px;">📋 PDF Clause Extraction & Key Risks</h4>
-        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
-          ${analysis.keyRisks.map(r => `
-            <div style="padding: 10px; background: rgba(15,20,32,0.8); border-left: 3px solid var(--accent-amber); border-radius: 4px; font-size: 13px;">
-              ⚠️ ${r}
-            </div>
-          `).join('')}
-        </div>
-
-        <h4 style="font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 10px;">✅ Eligibility Qualification Audit for ${ConstructData.user.name}</h4>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px;">
-          ${analysis.eligibilityChecklist.map(c => `
-            <div style="padding: 10px; background: rgba(22,28,46,0.6); border-radius: 6px; display: flex; align-items: center; justify-content: space-between; font-size: 12px;">
-              <span>${c.item}</span>
-              <span class="badge ${c.status === 'PASS' ? 'emerald' : 'rose'}">${c.status}</span>
-            </div>
-          `).join('')}
-        </div>
-
-        <button class="btn btn-primary" style="width: 100%;" onclick="window.ConstructApp.closeModal(); window.ConstructApp.openAIDrawer('Draft bid submission proposal for ${tender.id}')">
-          🚀 Draft Bid Submission Proposal with AI
-        </button>
-      `;
-
+      titleEl.innerText = title || 'ConstructOS Modal';
+      bodyEl.innerHTML = bodyHtml || '';
       overlayEl.classList.add('active');
     }
   },
@@ -161,10 +116,61 @@ window.ConstructApp = {
     if (overlayEl) overlayEl.classList.remove('active');
   },
 
+  openTenderModal: function(tenderId) {
+    if (!ConstructData.isLoggedIn) {
+      ConstructAuth.showLandingGate();
+      return;
+    }
+
+    const tender = ConstructData.tenders.find(t => t.id === tenderId);
+    if (!tender) return;
+
+    const analysis = ConstructAI.analyzeTender(tenderId);
+
+    const title = `AI Tender Analysis: ${tender.id}`;
+    const bodyHtml = `
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; background: rgba(6,182,212,0.08); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--accent-cyan-glow);">
+        <div>
+          <h3 style="font-size: 16px; font-weight: 700; color: #fff;">${tender.title}</h3>
+          <p style="font-size: 12px; color: var(--text-dim);">Department: ${tender.department} (${tender.district})</p>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 20px; font-weight: 800; color: var(--accent-emerald);">${analysis.winProbability}</div>
+          <span class="badge emerald">AI Estimated Win Probability</span>
+        </div>
+      </div>
+
+      <h4 style="font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 10px;">📋 PDF Clause Extraction & Key Risks</h4>
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+        ${analysis.keyRisks.map(r => `
+          <div style="padding: 10px; background: rgba(15,20,32,0.8); border-left: 3px solid var(--accent-amber); border-radius: 4px; font-size: 13px;">
+            ⚠️ ${r}
+          </div>
+        `).join('')}
+      </div>
+
+      <h4 style="font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 10px;">✅ Eligibility Qualification Audit for ${ConstructData.user.name}</h4>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px;">
+        ${analysis.eligibilityChecklist.map(c => `
+          <div style="padding: 10px; background: rgba(22,28,46,0.6); border-radius: 6px; display: flex; align-items: center; justify-content: space-between; font-size: 12px;">
+            <span>${c.item}</span>
+            <span class="badge ${c.status === 'PASS' ? 'emerald' : 'rose'}">${c.status}</span>
+          </div>
+        `).join('')}
+      </div>
+
+      <button class="btn btn-primary" style="width: 100%;" onclick="window.ConstructApp.closeModal(); window.ConstructApp.openAIDrawer('Draft bid submission proposal for ${tender.id}')">
+        🚀 Draft Bid Submission Proposal with AI
+      </button>
+    `;
+
+    this.openModal(title, bodyHtml);
+  },
+
   // AI Copilot Drawer Controllers
   openAIDrawer: function(initialPrompt) {
     if (!ConstructData.isLoggedIn) {
-      ConstructAuth.showLoginModal();
+      ConstructAuth.showLandingGate();
       return;
     }
 
@@ -188,7 +194,7 @@ window.ConstructApp = {
 
   sendAIMessage: function() {
     if (!ConstructData.isLoggedIn) {
-      ConstructAuth.showLoginModal();
+      ConstructAuth.showLandingGate();
       return;
     }
 

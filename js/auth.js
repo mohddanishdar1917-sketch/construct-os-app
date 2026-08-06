@@ -347,7 +347,15 @@ const ConstructAuth = {
       </div>
     `;
 
-    if (window.ConstructApp) {
+    const titleEl = document.getElementById('modal-title');
+    const bodyEl = document.getElementById('modal-body');
+    const overlayEl = document.getElementById('modal-overlay');
+
+    if (titleEl && bodyEl && overlayEl) {
+      titleEl.innerText = "🔐 Mobile OTP Security Verification";
+      bodyEl.innerHTML = modalBodyHtml;
+      overlayEl.classList.add('active');
+    } else if (window.ConstructApp && typeof window.ConstructApp.openModal === 'function') {
       window.ConstructApp.openModal("🔐 Mobile OTP Security Verification", modalBodyHtml);
     }
   },
@@ -428,7 +436,9 @@ const ConstructAuth = {
 
     ConstructData.setActiveContractor(verifiedProfile);
     
-    if (window.ConstructApp) {
+    const overlayEl = document.getElementById('modal-overlay');
+    if (overlayEl) overlayEl.classList.remove('active');
+    else if (window.ConstructApp && typeof window.ConstructApp.closeModal === 'function') {
       window.ConstructApp.closeModal();
     }
 
