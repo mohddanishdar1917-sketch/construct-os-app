@@ -14,7 +14,10 @@ const PWAInstaller = {
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
-          .then((reg) => console.log('[ConstructOS PWA] ServiceWorker registered with scope:', reg.scope))
+          .then((reg) => {
+            console.log('[ConstructOS PWA] ServiceWorker registered with scope:', reg.scope);
+            reg.update();
+          })
           .catch((err) => console.log('[ConstructOS PWA] ServiceWorker registration failed:', err));
       });
     }
