@@ -97,9 +97,16 @@ const ConstructAuth = {
 
   // REAL-TIME FORMAT & CHECKSUM VALIDATOR AS USER TYPES GSTIN MANUALLY
   handleGSTINInput: function(gstinVal) {
-    const clean = gstinVal.trim().toUpperCase();
+    const clean = (gstinVal || "").trim().toUpperCase();
     const badge = document.getElementById('gstin-status-badge');
     const submitBtn = document.getElementById('auth-submit-btn');
+
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+      submitBtn.style.cursor = 'pointer';
+      submitBtn.style.pointerEvents = 'auto';
+    }
 
     if (!badge) return;
 
@@ -112,11 +119,6 @@ const ConstructAuth = {
       badge.style.display = 'inline-flex';
       badge.className = 'badge amber';
       badge.innerHTML = `⚠️ Entering GSTIN (${clean.length}/15 chars)`;
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.style.opacity = '1';
-        submitBtn.style.cursor = 'pointer';
-      }
       return;
     }
 
@@ -219,49 +221,65 @@ const ConstructAuth = {
 
   // SUBMIT CONTRACTOR WITH MANUAL ENTRY WORKFLOW & FREE 10-DIGIT MOBILE ENTRY
   submitCustomContractor: function(event) {
-    if (event) event.preventDefault();
-
-    const gstinInput = (document.getElementById('auth-gstin').value.trim()).toUpperCase();
-    const nameInput = (document.getElementById('auth-name').value.trim()).toUpperCase();
-    const companyInput = (document.getElementById('auth-company').value.trim()).toUpperCase();
-    const classInput = document.getElementById('auth-class').value;
-    const circleInput = document.getElementById('auth-circle') ? document.getElementById('auth-circle').value : "Srinagar Circle (R&B)";
-    const deptInput = document.getElementById('auth-department') ? document.getElementById('auth-department').value : "Public Works Department (PWD R&B)";
-    const mobileInput = document.getElementById('auth-mobile').value.trim();
-
-    // 1. Mod-36 Checksum Verification
-    if (gstinInput.length !== 15) {
-      alert("Please enter a valid 15-character GSTIN Number.");
-      return;
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
     }
 
-    const expectedChecksum = this.calculateGSTINChecksum(gstinInput.substring(0, 14));
-    if (!expectedChecksum || expectedChecksum !== gstinInput.charAt(14)) {
-      alert(`❌ Invalid GSTIN Number! Altered digit detected (Checksum mismatch: expected '${expectedChecksum}', got '${gstinInput.charAt(14)}'). Please correct your GSTIN.`);
-      return;
+    try {
+      const gstinEl = document.getElementById('auth-gstin');
+      const nameEl = document.getElementById('auth-name');
+      const companyEl = document.getElementById('auth-company');
+      const classEl = document.getElementById('auth-class');
+      const circleEl = document.getElementById('auth-circle');
+      const deptEl = document.getElementById('auth-department');
+      const mobileEl = document.getElementById('auth-mobile');
+
+      const gstinInput = gstinEl ? gstinEl.value.trim().toUpperCase() : "";
+      const nameInput = nameEl ? nameEl.value.trim().toUpperCase() : "";
+      const companyInput = companyEl ? companyEl.value.trim().toUpperCase() : "";
+      const classInput = classEl ? classEl.value : "Class-A Special (Roads & Bridges)";
+      const circleInput = circleEl ? circleEl.value : "Srinagar Circle (R&B)";
+      const deptInput = deptEl ? deptEl.value : "Public Works Department (PWD R&B)";
+      const mobileInput = mobileEl ? mobileEl.value.trim() : "";
+
+      // 1. Mod-36 Checksum Verification
+      if (gstinInput.length !== 15) {
+        alert("Please enter a valid 15-character GSTIN Number (e.g. 01AAACA1234B1Z5).");
+        return;
+      }
+
+      const expectedChecksum = this.calculateGSTINChecksum(gstinInput.substring(0, 14));
+      if (!expectedChecksum || expectedChecksum !== gstinInput.charAt(14)) {
+        alert(`❌ Invalid GSTIN Number! Altered digit detected (Checksum mismatch: expected '${expectedChecksum}', got '${gstinInput.charAt(14)}'). Please correct your GSTIN.`);
+        return;
+      }
+
+      // 2. Check Contractor / Owner Name & Company / Firm Name
+      if (!nameInput || !companyInput) {
+        alert("Please enter both Contractor / Owner Name and Company / Firm Name.");
+        return;
+      }
+
+      // 3. Simple 10-Digit Mobile Number Validation (allows any 10-digit number freely)
+      if (!mobileInput || mobileInput.length !== 10 || !/^\d{10}$/.test(mobileInput)) {
+        alert("Please enter a valid 10-digit Mobile Number.");
+        return;
+      }
+
+      // Generate Fresh Unique 6-Digit OTP Code
+      this.currentOTP = Math.floor(100000 + Math.random() * 900000).toString();
+
+      // Hydrate GST Firm Details & Historical Tenders
+      this.pendingGSTData = ConstructData.fetchGSTDetailsAndTenders(
+        gstinInput, nameInput, companyInput, classInput, circleInput, mobileInput, deptInput
+      );
+
+      this.showGSTOTPModal();
+    } catch (e) {
+      console.error("[ConstructAuth Exception]", e);
+      alert("An unexpected error occurred: " + e.message);
     }
-
-    // 2. Check Contractor / Owner Name & Company / Firm Name
-    if (!nameInput || !companyInput) {
-      alert("Please enter both Contractor / Owner Name and Company / Firm Name.");
-      return;
-    }
-
-    // 3. Simple 10-Digit Mobile Number Validation (allows any 10-digit number freely)
-    if (!mobileInput || mobileInput.length !== 10 || !/^\d{10}$/.test(mobileInput)) {
-      alert("Please enter a valid 10-digit Mobile Number.");
-      return;
-    }
-
-    // Generate Fresh Unique 6-Digit OTP Code
-    this.currentOTP = Math.floor(100000 + Math.random() * 900000).toString();
-
-    // Hydrate GST Firm Details & Historical Tenders
-    this.pendingGSTData = ConstructData.fetchGSTDetailsAndTenders(
-      gstinInput, nameInput, companyInput, classInput, circleInput, mobileInput, deptInput
-    );
-
-    this.showGSTOTPModal();
   },
 
   showGSTOTPModal: function() {
