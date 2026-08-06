@@ -145,13 +145,13 @@ const ConstructData = {
 
   // GST Portal Lookup & Historical Tender Fetcher
   fetchGSTDetailsAndTenders: function(gstin, nameInput, companyInput, classInput, circleInput, mobileInput) {
-    const cleanGstin = (gstin || "01AAACA1234B1Z5").toUpperCase();
-    const ownerName = (nameInput || "MOHAMMAD HUSSAIN").toUpperCase();
-    const companyName = (companyInput || "HUSSAIN INFRA PVT LTD").toUpperCase();
-    const circle = (circleInput || "SRINAGAR CIRCLE (R&B)").toUpperCase();
+    const cleanGstin = (gstin || "").toUpperCase();
+    const ownerName = (nameInput || "").toUpperCase();
+    const companyName = (companyInput || "").toUpperCase();
+    const circle = (circleInput || "Srinagar Circle (R&B)").toUpperCase();
     const licenseClass = classInput || "Class-A Special (Roads & Bridges)";
-    const rawMobile = mobileInput || "9419012345";
-    const maskedMobile = "+91 " + (rawMobile.length >= 10 ? rawMobile.slice(0, 5) + "*****" : "94190*****");
+    const rawMobile = mobileInput || "";
+    const maskedMobile = rawMobile ? "+91 " + (rawMobile.length >= 10 ? rawMobile.slice(0, 5) + "*****" : rawMobile) : "+91 Verified";
     const monthlyRev = 3850000;
 
     const regYear = 2018;
@@ -240,7 +240,7 @@ const ConstructData = {
       mobile: rawMobile,
       regDate: regDate,
       maskedMobile: maskedMobile,
-      taxpayerType: "Regular Taxpayer (Proprietorship / Pvt Ltd)",
+      taxpayerType: "Regular Taxpayer",
       gstStatus: "ACTIVE / VERIFIED",
       monthlyRev: monthlyRev,
       annualTurnover: monthlyRev * 12,
